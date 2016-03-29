@@ -18,14 +18,20 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QPushButton" name="FooBarButton">
+    <widget class="QPushButton" name="LoadDicomDataButton">
      <property name="text">
-      <string>Foo Bar</string>
+      <string>Load DICOM Data</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../qSlicerMeasureDistortionModule.qrc">
+       <normaloff>:/Images/SlicerLoadDicom-Original.png</normaloff>:/Images/SlicerLoadDicom-Original.png</iconset>
      </property>
     </widget>
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../qSlicerMeasureDistortionModule.qrc"/>
+ </resources>
  <connections/>
 </ui>

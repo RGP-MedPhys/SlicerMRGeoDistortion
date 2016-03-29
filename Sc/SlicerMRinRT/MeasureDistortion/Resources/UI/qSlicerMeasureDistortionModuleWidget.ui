@@ -15,15 +15,14 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="ctkCollapsibleButton" name="CTKCollapsibleButton" native="true">
-     <property name="text" stdset="0">
-      <string>Display</string>
+    <widget class="QPushButton" name="LoadDicomDataButton">
+     <property name="text">
+      <string>Load DICOM Data</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="qSlicerMeasureDistortionFooBarWidget" name="FooBar" native="true"/>
-      </item>
-     </layout>
+     <property name="icon">
+      <iconset resource="../qSlicerMeasureDistortionModule.qrc">
+       <normaloff>:/Images/SlicerLoadDicom-Original.png</normaloff>:/Images/SlicerLoadDicom-Original.png</iconset>
+     </property>
     </widget>
    </item>
    <item>
@@ -48,19 +47,9 @@
    <header>qSlicerWidget.h</header>
    <container>1</container>
   </customwidget>
-  <customwidget>
-   <class>ctkCollapsibleButton</class>
-   <extends>QWidget</extends>
-   <header>ctkCollapsibleButton.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>qSlicerMeasureDistortionFooBarWidget</class>
-   <extends>QWidget</extends>
-   <header>qSlicerMeasureDistortionFooBarWidget.h</header>
-   <container>1</container>
-  </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../qSlicerMeasureDistortionModule.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -39,6 +39,7 @@ public:
   virtual ~qSlicerMeasureDistortionModuleWidget();
 
 public slots:
+bool loadDicomData();
 
 
 protected:

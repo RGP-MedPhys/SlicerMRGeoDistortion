@@ -68,14 +68,14 @@ QString qSlicerMeasureDistortionModule::helpText() const
 //-----------------------------------------------------------------------------
 QString qSlicerMeasureDistortionModule::acknowledgementText() const
 {
-  return "This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN";
+  return "Research supported in part by a grant from Philips HealthCare and technical research support from GE Healthcare.";
 }
 
 //-----------------------------------------------------------------------------
 QStringList qSlicerMeasureDistortionModule::contributors() const
 {
   QStringList moduleContributors;
-  moduleContributors << QString("John Doe (AnyWare Corp.)");
+  moduleContributors << QString("Ryan G Price (Henry Ford Health System)");
   return moduleContributors;
 }
 
@@ -88,19 +88,19 @@ QIcon qSlicerMeasureDistortionModule::icon() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerMeasureDistortionModule::categories() const
 {
-  return QStringList() << "Examples";
+  return QStringList() << "MRinRT";
 }
 
 //-----------------------------------------------------------------------------
 QStringList qSlicerMeasureDistortionModule::dependencies() const
 {
-  return QStringList();
+  return QStringList() << "Volumes";
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerMeasureDistortionModule::setup()
 {
-  this->Superclass::setup();
+
 }
 
 //-----------------------------------------------------------------------------
