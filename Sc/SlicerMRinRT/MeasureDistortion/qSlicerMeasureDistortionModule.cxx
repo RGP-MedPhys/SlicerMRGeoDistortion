@@ -50,7 +50,7 @@ qSlicerMeasureDistortionModulePrivate::qSlicerMeasureDistortionModulePrivate()
 //-----------------------------------------------------------------------------
 qSlicerMeasureDistortionModule::qSlicerMeasureDistortionModule(QObject* _parent)
   : Superclass(_parent)
-  , d_ptr(new qSlicerMeasureDistortionModulePrivate)
+  , d_ptr(new qSlicerMeasureDistortionModulePrivate) 
 {
 }
 
