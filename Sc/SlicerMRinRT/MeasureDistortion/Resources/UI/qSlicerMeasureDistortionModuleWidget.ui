@@ -26,17 +26,6 @@
     </widget>
    </item>
    <item>
-    <widget class="ctkCollapsibleButton" name="SliceControllersCollapsibleButton">
-     <property name="text">
-      <string>Slice Controllers</string>
-     </property>
-     <layout class="QVBoxLayout" name="SliceControllersLayout"/>
-    </widget>
-   </item>
-   <item>
-    <widget class="qMRMLNodeComboBox" name="MRMLNodeComboBox"/>
-   </item>
-   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -53,20 +42,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>qMRMLNodeComboBox</class>
-   <extends>QWidget</extends>
-   <header>qMRMLNodeComboBox.h</header>
-  </customwidget>
-  <customwidget>
    <class>qSlicerWidget</class>
    <extends>QWidget</extends>
    <header>qSlicerWidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>ctkCollapsibleButton</class>
-   <extends>QWidget</extends>
-   <header>ctkCollapsibleButton.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -34,8 +34,6 @@
 
 #include "vtkSlicerMeasureDistortionModuleLogicExport.h"
 
-class vtkMRMLSliceNode;
-class vtkMRMLViewNode;
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
 class VTK_SLICER_MEASUREDISTORTION_MODULE_LOGIC_EXPORT vtkSlicerMeasureDistortionLogic :
@@ -46,23 +44,6 @@ public:
   static vtkSlicerMeasureDistortionLogic *New();
   vtkTypeMacro(vtkSlicerMeasureDistortionLogic, vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
-
-public:
-
-	/// Retrieves the default slice view node from the scene.
-	/// The returned node can be changed to customize the contents of
-	/// new view nodes. ResetAllViewNodesToDefault() can be called to
-	/// update all existing view nodes to the new default settings immediately.
-	vtkMRMLSliceNode* GetDefaultSliceViewNode();
-
-	/// Retrieves the default 3D view node from the scene.
-	/// The returned node can be changed to customize the contents of
-	/// new view nodes. ResetAllViewNodesToDefault() can be called to
-	/// update all existing view nodes to the new default settings immediately.
-	vtkMRMLViewNode* GetDefaultThreeDViewNode();
-
-	/// Reset all existing slice and 3D view nodes to default settings.
-	void ResetAllViewNodesToDefault();
 
 protected:
   vtkSlicerMeasureDistortionLogic();

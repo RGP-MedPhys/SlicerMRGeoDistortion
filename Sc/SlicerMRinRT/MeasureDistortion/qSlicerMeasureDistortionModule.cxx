@@ -16,7 +16,6 @@
 ==============================================================================*/
 
 // Qt includes
-#include <QDebug>
 #include <QtPlugin>
  
 // MeasureDistortion Logic includes
@@ -25,9 +24,6 @@
 // MeasureDistortion includes
 #include "qSlicerMeasureDistortionModule.h"
 #include "qSlicerMeasureDistortionModuleWidget.h"
-
-#include <vtkMRMLSliceNode.h>
-#include <vtkMRMLViewNode.h>
 
 //-----------------------------------------------------------------------------
 Q_EXPORT_PLUGIN2(qSlicerMeasureDistortionModule, qSlicerMeasureDistortionModule);
@@ -108,25 +104,6 @@ void qSlicerMeasureDistortionModule::setup()
 }
 
 //-----------------------------------------------------------------------------
-void qSlicerMeasureDistortionModule::setMRMLScene(vtkMRMLScene* scene)
-{
-	this->Superclass::setMRMLScene(scene);
-	vtkSlicerMeasureDistortionLogic* logic = vtkSlicerMeasureDistortionLogic::SafeDownCast(this->logic());
-	if (!logic)
-	{
-		qCritical() << Q_FUNC_INFO << " failed: logic is invalid";
-		return;
-	}
-	// Update default view nodes from settings
-	this->readDefaultSliceViewSettings(logic->GetDefaultSliceViewNode());
-	//this->readDefaultThreeDViewSettings(logic->GetDefaultThreeDViewNode());
-	this->writeDefaultSliceViewSettings(logic->GetDefaultSliceViewNode());
-	//this->writeDefaultThreeDViewSettings(logic->GetDefaultThreeDViewNode());
-	// Update all existing view nodes to default
-	logic->ResetAllViewNodesToDefault();
-}
-
-//-----------------------------------------------------------------------------
 qSlicerAbstractModuleRepresentation* qSlicerMeasureDistortionModule
 ::createWidgetRepresentation()
 {
@@ -138,54 +115,3 @@ vtkMRMLAbstractLogic* qSlicerMeasureDistortionModule::createLogic()
 {
   return vtkSlicerMeasureDistortionLogic::New();
 }
-
-//-----------------------------------------------------------------------------
-//void qSlicerMeasureDistortionModule::readCommonViewSettings(vtkMRMLAbstractViewNode* defaultViewNode, QSettings& settings)
-//{
-//	if (settings.contains("OrientationMarkerType"))
-//	{
-//		defaultViewNode->SetOrientationMarkerType(vtkMRMLAbstractViewNode::GetOrientationMarkerTypeFromString(settings.value("OrientationMarkerType").toString().toLatin1()));
-//	}
-//	if (settings.contains("OrientationMarkerSize"))
-//	{
-//		defaultViewNode->SetOrientationMarkerSize(vtkMRMLAbstractViewNode::GetOrientationMarkerSizeFromString(settings.value("OrientationMarkerSize").toString().toLatin1()));
-//	}
-//	if (settings.contains("RulerType"))
-//	{
-//		defaultViewNode->SetRulerType(vtkMRMLAbstractViewNode::GetRulerTypeFromString(settings.value("RulerType").toString().toLatin1()));
-//	}
-//}
-
-//-----------------------------------------------------------------------------
-//void qSlicerMeasureDistortionModule::writeCommonViewSettings(vtkMRMLAbstractViewNode* defaultViewNode, QSettings& settings)
-//{
-//	settings.setValue("OrientationMarkerType", vtkMRMLAbstractViewNode::GetOrientationMarkerTypeAsString(defaultViewNode->GetOrientationMarkerType()));
-//	settings.setValue("OrientationMarkerSize", vtkMRMLAbstractViewNode::GetOrientationMarkerSizeAsString(defaultViewNode->GetOrientationMarkerSize()));
-//	settings.setValue("RulerType", vtkMRMLAbstractViewNode::GetRulerTypeAsString(defaultViewNode->GetRulerType()));
-//}
-
-//-----------------------------------------------------------------------------
-//void qSlicerMeasureDistortionModule::readDefaultSliceViewSettings(vtkMRMLSliceNode* defaultViewNode)
-//{
-//	if (!defaultViewNode)
-//	{
-//		qCritical() << Q_FUNC_INFO << " failed: defaultViewNode is invalid";
-//		return;
-//	}
-//	QSettings settings;
-//	settings.beginGroup("DefaultSliceView");
-//	readCommonViewSettings(defaultViewNode, settings);
-//}
-
-//-----------------------------------------------------------------------------
-//void qSlicerMeasureDistortionModule::writeDefaultSliceViewSettings(vtkMRMLSliceNode* defaultViewNode)
-//{
-//	if (!defaultViewNode)
-//	{
-//		qCritical() << Q_FUNC_INFO << " failed: defaultViewNode is invalid";
-//		return;
-//	}
-//	QSettings settings;
-//	settings.beginGroup("DefaultSliceView");
-//	writeCommonViewSettings(defaultViewNode, settings);
-//}
