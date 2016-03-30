@@ -18,6 +18,9 @@
 #ifndef __qSlicerMeasureDistortionModuleWidget_h
 #define __qSlicerMeasureDistortionModuleWidget_h
 
+// CTK includes
+#include <ctkPimpl.h>
+
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
 
@@ -40,7 +43,10 @@ public:
 
 public slots:
 bool loadDicomData();
-
+virtual void setMRMLScene(vtkMRMLScene *newScene);
+void onNodeAddedEvent(vtkObject* scene, vtkObject* node);
+void onNodeRemovedEvent(vtkObject* scene, vtkObject* node);
+void onLayoutChanged(int);
 
 protected:
   QScopedPointer<qSlicerMeasureDistortionModuleWidgetPrivate> d_ptr;

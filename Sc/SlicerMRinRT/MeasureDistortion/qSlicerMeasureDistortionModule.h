@@ -23,6 +23,8 @@
 
 #include "qSlicerMeasureDistortionModuleExport.h"
 
+class QSettings;
+
 class qSlicerMeasureDistortionModulePrivate;
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
@@ -50,6 +52,18 @@ public:
   virtual QStringList categories()const;
   virtual QStringList dependencies() const;
 
+  /// Read default slice view settings from application settings (.ini file)
+  /// into defaultViewNode.
+  static void readDefaultSliceViewSettings(vtkMRMLSliceNode* defaultViewNode);
+
+  /// Write default slice view settings to application settings (.ini file)
+  /// from defaultViewNode.
+  static void writeDefaultSliceViewSettings(vtkMRMLSliceNode* defaultViewNode);
+
+  /// Set MRML scene for the module. Updates the default view settings based on
+  /// the application settings.
+  virtual void setMRMLScene(vtkMRMLScene* scene);
+
 protected:
 
   /// Initialize the module. Register the volumes reader/writer
@@ -60,6 +74,10 @@ protected:
 
   /// Create and return the logic associated to this module
   virtual vtkMRMLAbstractLogic* createLogic();
+
+  /// Helper functions to read/write common view settings
+  static void readCommonViewSettings(vtkMRMLAbstractViewNode* defaultViewNode, QSettings& settings);
+  static void writeCommonViewSettings(vtkMRMLAbstractViewNode* defaultViewNode, QSettings& settings);
 
 protected:
   QScopedPointer<qSlicerMeasureDistortionModulePrivate> d_ptr;
