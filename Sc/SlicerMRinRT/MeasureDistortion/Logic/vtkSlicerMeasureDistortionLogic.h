@@ -28,12 +28,36 @@
 #include "vtkSlicerModuleLogic.h"
 
 // MRML includes
+#include "vtkMRML.h"
+#include "vtkMRMLScene.h"
+#include "vtkMRMLVolumeNode.h"
 
 // STD includes
 #include <cstdlib>
+#include <list>
 
 #include "vtkSlicerMeasureDistortionModuleLogicExport.h"
 
+//class vtkMRMLLabelMapVolumeNode;
+//class vtkMRMLScalarVolumeNode;
+//class vtkMRMLScalarVolumeDisplayNode;
+//class vtkMRMLVolumeHeaderlessStorageNode;
+//class vtkStringArray;
+
+//struct ArchetypeVolumeNodeSet
+//{
+//	ArchetypeVolumeNodeSet(vtkMRMLScene * scene) :Scene(scene){}
+//	ArchetypeVolumeNodeSet(const ArchetypeVolumeNodeSet& set) {
+//		Node = set.Node;
+//		DisplayNode = set.DisplayNode;
+//		StorageNode = set.StorageNode;
+//		Scene = set.Scene;
+//	}
+//	vtkSmartPointer<vtkMRMLVolumeNode> Node;
+//	vtkSmartPointer<vtkMRMLVolumeDisplayNode> DisplayNode;
+//	vtkSmartPointer<vtkMRMLStorageNode> StorageNode;
+//	vtkSmartPointer<vtkMRMLScene> Scene; 
+//};
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
 class VTK_SLICER_MEASUREDISTORTION_MODULE_LOGIC_EXPORT vtkSlicerMeasureDistortionLogic :
@@ -57,8 +81,15 @@ protected:
   virtual void OnMRMLSceneNodeRemoved(vtkMRMLNode* node);
 private:
 
-  vtkSlicerMeasureDistortionLogic(const vtkSlicerMeasureDistortionLogic&); // Not implemented
-  void operator=(const vtkSlicerMeasureDistortionLogic&); // Not implemented
+
+public:
+
+
+
+	/// The currently active mrml volume node
+//	void SetActiveVolumeNode(vtkMRMLVolumeNode *ActiveVolumeNode);
+//	vtkMRMLVolumeNode* GetActiveVolumeNode()const;
+
 };
 
 #endif

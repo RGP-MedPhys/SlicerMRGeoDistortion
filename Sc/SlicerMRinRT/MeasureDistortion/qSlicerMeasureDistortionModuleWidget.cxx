@@ -29,8 +29,11 @@
 // CTK includes
 #include "ctkButtonGroup.h"
 
+// MRML includes
+#include <vtkMRMLScalarVolumeNode.h>
+
 //-----------------------------------------------------------------------------
-/// \ingroup Slicer_QtModules_ExtensionTemplate
+/// \ingroup Slicer_QtModules_Measure Distortion
 class qSlicerMeasureDistortionModuleWidgetPrivate: public Ui_qSlicerMeasureDistortionModuleWidget
 {
 	Q_DECLARE_PUBLIC(qSlicerMeasureDistortionModuleWidget);
@@ -101,12 +104,37 @@ void qSlicerMeasureDistortionModuleWidget::setup()
   connect(d->LoadDicomDataButton, SIGNAL(clicked()),
 	  this, SLOT(loadDicomData()));
 
+//  QObject::connect(d->ActiveVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
+//	  d->MRMLVolumeInfoWidget, SLOT(setVolumeNode(vtkMRMLNode*)));
+//  QObject::connect(d->ActiveVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
+//	  d->VolumeDisplayWidget, SLOT(setMRMLVolumeNode(vtkMRMLNode*)));
+  QObject::connect(d->ActiveVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
+	  this, SLOT(nodeSelectionChanged(vtkMRMLNode*)));
+
+
 #ifndef Slicer_BUILD_DICOM_SUPPORT
   d->LoadDicomDataButton->setDisabled(true);
 #endif
 
   this->Superclass::setup();
 }
+//------------------------------------------------------------------------------
+void qSlicerMeasureDistortionModuleWidget::nodeSelectionChanged(vtkMRMLNode* node)
+{
+	Q_UNUSED(node);
+	this->updateWidgetFromMRML();
+	std::cout << "Test" << '/n';
+}
+//------------------------------------------------------------------------------
+void qSlicerMeasureDistortionModuleWidget::updateWidgetFromMRML()
+{
+	Q_D(qSlicerMeasureDistortionModuleWidget);
+
+	vtkMRMLVolumeNode* currentVolumeNode = vtkMRMLVolumeNode::SafeDownCast(
+		d->ActiveVolumeNodeSelector->currentNode());
+	
+}
+
 
 //-----------------------------------------------------------------------------
 bool qSlicerMeasureDistortionModuleWidget::loadDicomData()

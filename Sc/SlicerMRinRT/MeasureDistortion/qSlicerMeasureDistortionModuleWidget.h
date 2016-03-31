@@ -40,7 +40,8 @@ public:
 
 public slots:
 bool loadDicomData();
-
+void nodeSelectionChanged(vtkMRMLNode*);
+void updateWidgetFromMRML();
 
 protected:
   QScopedPointer<qSlicerMeasureDistortionModuleWidgetPrivate> d_ptr;
