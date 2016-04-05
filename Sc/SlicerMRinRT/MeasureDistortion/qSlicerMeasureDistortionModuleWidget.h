@@ -22,9 +22,10 @@
 #include "qSlicerAbstractModuleWidget.h"
 
 #include "qSlicerMeasureDistortionModuleExport.h"
+#include <vtkMRMLNode.h>
 
 class qSlicerMeasureDistortionModuleWidgetPrivate;
-class vtkMRMLNode;
+//class vtkMRMLNode;
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
 class Q_SLICER_QTMODULES_MEASUREDISTORTION_EXPORT qSlicerMeasureDistortionModuleWidget :
@@ -38,10 +39,15 @@ public:
   qSlicerMeasureDistortionModuleWidget(QWidget *parent=0);
   virtual ~qSlicerMeasureDistortionModuleWidget();
 
+  char *CTvolumeNodeID;
+  char *MR1volumeNodeID;
+  char *MR2volumeNodeID;
+
 public slots:
-bool loadDicomData();
-void nodeSelectionChanged(vtkMRMLNode*);
-void updateWidgetFromMRML();
+ //bool loadDicomData();
+ void OnCTSelectionChanged(vtkMRMLNode*);
+ void MR1SelectionChanged(vtkMRMLNode*);
+ void MR2SelectionChanged(vtkMRMLNode*);
 
 protected:
   QScopedPointer<qSlicerMeasureDistortionModuleWidgetPrivate> d_ptr;

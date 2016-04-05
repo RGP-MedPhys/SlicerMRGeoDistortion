@@ -20,17 +20,32 @@
 #include <QMessageBox>
 
 // SlicerQt includes
+#include <qSlicerAbstractCoreModule.h>
 #include "qSlicerApplication.h"
 #include "qSlicerLayoutManager.h"
 #include "qSlicerMeasureDistortionModuleWidget.h"
 #include "qSlicerModuleManager.h"
 #include "ui_qSlicerMeasureDistortionModuleWidget.h"
 
+
 // CTK includes
 #include "ctkButtonGroup.h"
 
 // MRML includes
 #include <vtkMRMLScalarVolumeNode.h>
+#include <vtkMRMLSliceNode.h>
+#include <vtkimagedata.h>
+#include <vtkMRMLScene.h>
+#include <vtkMRMLNode.h>
+#include <vtkMRMLCropVolumeParametersNode.h>
+#include <vtkMRMLVolumeNode.h>
+#include <vtkMRMLSelectionNode.h>
+#include <vtkMRMLTransformNode.h>
+#include <vtkMRMLApplicationLogic.h>
+#include "vtkSlicerMeasureDistortionLogic.h"
+
+
+
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_Measure Distortion
@@ -41,7 +56,7 @@ protected:
 	qSlicerMeasureDistortionModuleWidget* const q_ptr;
 public:
 	qSlicerMeasureDistortionModuleWidgetPrivate(qSlicerMeasureDistortionModuleWidget& object);
-
+	vtkSlicerMeasureDistortionLogic* logic() const;
   bool selectModule(const QString& moduleName);
 };
 
@@ -95,22 +110,37 @@ qSlicerMeasureDistortionModuleWidget::~qSlicerMeasureDistortionModuleWidget()
 {
 }
 
+
 //-----------------------------------------------------------------------------
+vtkSlicerMeasureDistortionLogic* qSlicerMeasureDistortionModuleWidgetPrivate::logic() const
+{
+	Q_Q(const qSlicerMeasureDistortionModuleWidget);
+	return vtkSlicerMeasureDistortionLogic::SafeDownCast(q->logic());
+}
+
+
+
+//-----------------------------------------------------------------------------
+
+
 void qSlicerMeasureDistortionModuleWidget::setup()
 {
   Q_D(qSlicerMeasureDistortionModuleWidget);
   d->setupUi(this);
 
-  connect(d->LoadDicomDataButton, SIGNAL(clicked()),
-	  this, SLOT(loadDicomData()));
+ // connect(d->LoadDicomDataButton, SIGNAL(clicked()),
+//	  this, SLOT(loadDicomData()));
+  connect(d->CTVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
+	  this, SLOT(OnCTSelectionChanged(vtkMRMLNode*)));
+  connect(d->MRVolumeNodeSelector1, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
+	  this, SLOT(MR1SelectionChanged(vtkMRMLNode*)));
+  connect(d->MRVolumeNodeSelector2, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
+	  this, SLOT(MR2SelectionChanged(vtkMRMLNode*)));
 
-//  QObject::connect(d->ActiveVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
-//	  d->MRMLVolumeInfoWidget, SLOT(setVolumeNode(vtkMRMLNode*)));
-//  QObject::connect(d->ActiveVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
-//	  d->VolumeDisplayWidget, SLOT(setMRMLVolumeNode(vtkMRMLNode*)));
-  QObject::connect(d->ActiveVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
-	  this, SLOT(nodeSelectionChanged(vtkMRMLNode*)));
-
+  
+//  QObject::connect(qSlicerApplication::application(),
+//	  SIGNAL(mrmlSceneChanged(vtkMRMLScene*)),
+//	  this->LayoutManager, SLOT(setMRMLScene(vtkMRMLScene*)));
 
 #ifndef Slicer_BUILD_DICOM_SUPPORT
   d->LoadDicomDataButton->setDisabled(true);
@@ -119,26 +149,82 @@ void qSlicerMeasureDistortionModuleWidget::setup()
   this->Superclass::setup();
 }
 //------------------------------------------------------------------------------
-void qSlicerMeasureDistortionModuleWidget::nodeSelectionChanged(vtkMRMLNode* node)
+void qSlicerMeasureDistortionModuleWidget::OnCTSelectionChanged(vtkMRMLNode*)
 {
-	Q_UNUSED(node);
-	this->updateWidgetFromMRML();
-	std::cout << "Test" << '/n';
+	Q_D(const qSlicerMeasureDistortionModuleWidget);
+
+	vtkMRMLNode* node = d->CTVolumeNodeSelector->currentNode();
+	if (node)
+	{
+		if (this->mrmlScene() &&
+			!this->mrmlScene()->IsClosing() &&
+			!this->mrmlScene()->IsBatchProcessing())
+		{
+			// set it to be active in the slice windows
+			vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
+			vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
+			CTvolumeNodeID = d->CTVolumeNodeSelector->currentNode()->GetID();
+			selectionNode->SetReferenceActiveVolumeID(CTvolumeNodeID);
+			appLogic->PropagateVolumeSelection();
+		}
+	}
+
+
+//	qDebug() << CTnode;
+
+//	QMessageBox msgBox;
+//	msgBox.setWindowTitle("Info");
+//	msgBox.setInformativeText("Test.");
+//	msgBox.exec();
+
 }
+
 //------------------------------------------------------------------------------
-void qSlicerMeasureDistortionModuleWidget::updateWidgetFromMRML()
-{
-	Q_D(qSlicerMeasureDistortionModuleWidget);
 
-	vtkMRMLVolumeNode* currentVolumeNode = vtkMRMLVolumeNode::SafeDownCast(
-		d->ActiveVolumeNodeSelector->currentNode());
-	
+void qSlicerMeasureDistortionModuleWidget::MR1SelectionChanged(vtkMRMLNode*)
+{
+	Q_D(const qSlicerMeasureDistortionModuleWidget);
+	vtkMRMLNode* node = d->MRVolumeNodeSelector1->currentNode();
+	if (node)
+	{
+		if (this->mrmlScene() &&
+			!this->mrmlScene()->IsClosing() &&
+			!this->mrmlScene()->IsBatchProcessing())
+		{
+			// set it to be active in the slice windows
+			vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
+			vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
+			MR1volumeNodeID = d->MRVolumeNodeSelector1->currentNode()->GetID();
+			selectionNode->SetReferenceActiveVolumeID(MR1volumeNodeID);
+			appLogic->PropagateVolumeSelection();
+		}
+	}
 }
 
-
+//------------------------------------------------------------------------------
+void qSlicerMeasureDistortionModuleWidget::MR2SelectionChanged(vtkMRMLNode*)
+{
+	Q_D(const qSlicerMeasureDistortionModuleWidget);
+	vtkMRMLNode* node = d->MRVolumeNodeSelector2->currentNode();
+	if (node)
+	{
+		if (this->mrmlScene() &&
+			!this->mrmlScene()->IsClosing() &&
+			!this->mrmlScene()->IsBatchProcessing())
+		{
+			// set it to be active in the slice windows
+			vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
+			vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
+			MR2volumeNodeID = d->MRVolumeNodeSelector2->currentNode()->GetID();
+			selectionNode->SetReferenceActiveVolumeID(MR2volumeNodeID);
+			appLogic->PropagateVolumeSelection();
+		}
+	}
+}
 //-----------------------------------------------------------------------------
-bool qSlicerMeasureDistortionModuleWidget::loadDicomData()
-{
-	Q_D(qSlicerMeasureDistortionModuleWidget);
-	return d->selectModule("DICOM");
-}
+//bool qSlicerMeasureDistortionModuleWidget::loadDicomData()
+//{
+//	Q_D(qSlicerMeasureDistortionModuleWidget);
+//	return d->selectModule("DICOM");
+//}
+//-------------------------------------------------------------

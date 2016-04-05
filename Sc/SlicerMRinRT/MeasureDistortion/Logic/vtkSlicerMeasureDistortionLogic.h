@@ -27,6 +27,9 @@
 // Slicer includes
 #include "vtkSlicerModuleLogic.h"
 
+#include "qSlicerAbstractModuleWidget.h"
+
+
 // MRML includes
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
@@ -38,36 +41,21 @@
 
 #include "vtkSlicerMeasureDistortionModuleLogicExport.h"
 
-//class vtkMRMLLabelMapVolumeNode;
-//class vtkMRMLScalarVolumeNode;
-//class vtkMRMLScalarVolumeDisplayNode;
-//class vtkMRMLVolumeHeaderlessStorageNode;
-//class vtkStringArray;
+class vtkSlicerVolumesLogic;
 
-//struct ArchetypeVolumeNodeSet
-//{
-//	ArchetypeVolumeNodeSet(vtkMRMLScene * scene) :Scene(scene){}
-//	ArchetypeVolumeNodeSet(const ArchetypeVolumeNodeSet& set) {
-//		Node = set.Node;
-//		DisplayNode = set.DisplayNode;
-//		StorageNode = set.StorageNode;
-//		Scene = set.Scene;
-//	}
-//	vtkSmartPointer<vtkMRMLVolumeNode> Node;
-//	vtkSmartPointer<vtkMRMLVolumeDisplayNode> DisplayNode;
-//	vtkSmartPointer<vtkMRMLStorageNode> StorageNode;
-//	vtkSmartPointer<vtkMRMLScene> Scene; 
-//};
-
-/// \ingroup Slicer_QtModules_ExtensionTemplate
+/// \ingroup Slicer_QtModules_MeasureDistortion
 class VTK_SLICER_MEASUREDISTORTION_MODULE_LOGIC_EXPORT vtkSlicerMeasureDistortionLogic :
   public vtkSlicerModuleLogic
 {
+
 public:
 
   static vtkSlicerMeasureDistortionLogic *New();
   vtkTypeMacro(vtkSlicerMeasureDistortionLogic, vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
+  void CTSelectionChanged(vtkMRMLNode* CTnode);
+  void SetVolumesLogic(vtkSlicerVolumesLogic* logic);
+  vtkSlicerVolumesLogic* GetVolumesLogic();
 
 protected:
   vtkSlicerMeasureDistortionLogic();
@@ -80,16 +68,17 @@ protected:
   virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
   virtual void OnMRMLSceneNodeRemoved(vtkMRMLNode* node);
 private:
+	class vtkInternal;
+	vtkInternal* Internal;
 
-
-public:
-
-
-
+//public:
+	//void* pntrCTSelectionChanged = &CTSelectionChanged;
 	/// The currently active mrml volume node
 //	void SetActiveVolumeNode(vtkMRMLVolumeNode *ActiveVolumeNode);
 //	vtkMRMLVolumeNode* GetActiveVolumeNode()const;
-
+//	Q_INVOKABLE vtkMRMLNode* currentNode()const;
+	
+	
 };
 
 #endif

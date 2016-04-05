@@ -15,6 +15,18 @@ set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/SlicerMRi
 # Extension dependencies
 find_package(Slicer REQUIRED)
 include(${Slicer_USE_FILE})
+set(qt_module_include_directories
+   ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
+   ${CMAKE_CURRENT_BINARY_DIR}/Widgets
+   ${vtkSlicerVolumesModuleLogic_SOURCE_DIR}
+   ${vtkSlicerVolumesModuleLogic_BINARY_DIR}
+   ${qSlicerVolumesModuleWidgets_SOURCE_DIR}
+   ${qSlicerVolumesModuleWidgets_BINARY_DIR}
+   )
+ set(qt_module_target_libraries
+   vtkSlicerVolumesModuleLogic
+   qSlicerVolumesModuleWidgets
+   )
 
 #-----------------------------------------------------------------------------
 # Extension modules

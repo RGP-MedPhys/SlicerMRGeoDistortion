@@ -17,29 +17,67 @@
 
 // MeasureDistortion Logic includes
 #include "vtkSlicerMeasureDistortionLogic.h"
+#include "vtkSlicerVolumesLogic.h"
 
 // MRML includes
 #include <vtkMRMLScene.h>
+#include <vtkMRMLSceneViewNode.h>
+#include <vtkMRMLSliceNode.h>
+#include <vtkMRMLScalarVolumeNode.h>
+#include <vtkMRMLScene.h>
+#include <QDebug>
+
 
 // VTK includes
 #include <vtkIntArray.h>
 #include <vtkNew.h>
 #include <vtkObjectFactory.h>
+#include <vtkimagedata.h>
+
 
 // STD includes
 #include <cassert>
 
+// ----------------------------------------------------------------------------
+class vtkSlicerMeasureDistortionLogic::vtkInternal
+{
+public:
+	vtkInternal();
+
+	vtkSlicerVolumesLogic* VolumesLogic;
+};
+
+
+//----------------------------------------------------------------------------
+vtkSlicerMeasureDistortionLogic::vtkInternal::vtkInternal()
+{
+	this->VolumesLogic = 0;
+}
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkSlicerMeasureDistortionLogic);
 
 //----------------------------------------------------------------------------
 vtkSlicerMeasureDistortionLogic::vtkSlicerMeasureDistortionLogic()
 {
+	this->Internal = new vtkInternal;
 }
 
 //----------------------------------------------------------------------------
 vtkSlicerMeasureDistortionLogic::~vtkSlicerMeasureDistortionLogic()
 {
+}
+
+
+//----------------------------------------------------------------------------
+void vtkSlicerMeasureDistortionLogic::SetVolumesLogic(vtkSlicerVolumesLogic* logic)
+{
+	this->Internal->VolumesLogic = logic;
+}
+
+//----------------------------------------------------------------------------
+vtkSlicerVolumesLogic* vtkSlicerMeasureDistortionLogic::GetVolumesLogic()
+{
+	return this->Internal->VolumesLogic;
 }
 
 //----------------------------------------------------------------------------
@@ -62,6 +100,11 @@ void vtkSlicerMeasureDistortionLogic::SetMRMLSceneInternal(vtkMRMLScene * newSce
 void vtkSlicerMeasureDistortionLogic::RegisterNodes()
 {
   assert(this->GetMRMLScene() != 0);
+
+//  vtkMRMLSceneViewNode* viewNode = vtkMRMLSceneViewNode::New();
+//  this->GetMRMLScene()->RegisterNodeClass(viewNode);
+
+  //vtkMRMLSceneViewNode* viewNode = vtkMRMLSceneViewNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(id));
 }
 
 //---------------------------------------------------------------------------
@@ -81,3 +124,18 @@ void vtkSlicerMeasureDistortionLogic
 ::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
 {
 }
+//--------------------------------------------------------------------------
+//void vtkSlicerMeasureDistortionLogic::currentNode();
+//{
+
+//}
+//------------------------------------------------------
+void vtkSlicerMeasureDistortionLogic::CTSelectionChanged(vtkMRMLNode* CTnode)
+{
+	//Q_D(qSlicerMeasureDistortionModuleWidget);
+	
+
+
+}
+
+//------------------------------------------------------------------------------

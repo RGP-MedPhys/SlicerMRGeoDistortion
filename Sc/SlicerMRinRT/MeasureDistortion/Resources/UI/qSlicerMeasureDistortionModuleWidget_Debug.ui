@@ -15,28 +15,36 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="qMRMLNodeComboBox" name="CTVolumeNodeSelector">
-     <property name="nodeTypes">
-      <stringlist>
-       <string>vtkMRMLVolumeNode</string>
-      </stringlist>
+    <widget class="QPushButton" name="LoadDicomDataButton">
+     <property name="text">
+      <string>Load DICOM Data</string>
      </property>
-     <property name="addEnabled">
-      <bool>false</bool>
-     </property>
-     <property name="renameEnabled">
-      <bool>true</bool>
-     </property>
-     <property name="sizeAdjustPolicy">
-      <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+     <property name="icon">
+      <iconset resource="../qSlicerMeasureDistortionModule.qrc">
+       <normaloff>:/Images/SlicerLoadDicom-Original.png</normaloff>:/Images/SlicerLoadDicom-Original.png</iconset>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="qMRMLNodeComboBox" name="MRVolumeNodeSelector1"/>
+    <widget class="qMRMLNodeComboBox" name="CTVolumeNodeSelector" native="true">
+     <property name="nodeTypes" stdset="0">
+      <stringlist>
+       <string>vtkMRMLVolumeNode</string>
+      </stringlist>
+     </property>
+     <property name="addEnabled" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="renameEnabled" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
    </item>
    <item>
-    <widget class="qMRMLNodeComboBox" name="MRVolumeNodeSelector2"/>
+    <widget class="qMRMLNodeComboBox" name="MRVolumeNodeSelector1" native="true"/>
+   </item>
+   <item>
+    <widget class="qMRMLNodeComboBox" name="MRVolumeNodeSelector2" native="true"/>
    </item>
    <item>
     <spacer name="verticalSpacer">
