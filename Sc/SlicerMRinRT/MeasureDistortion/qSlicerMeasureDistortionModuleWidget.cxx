@@ -19,7 +19,6 @@
 #include <QDebug>
 #include <QMessageBox>
 
-
 // SlicerQt includes
 #include <qSlicerAbstractCoreModule.h>
 #include "qSlicerApplication.h"
@@ -129,10 +128,10 @@ void qSlicerMeasureDistortionModuleWidget::setup()
   Q_D(qSlicerMeasureDistortionModuleWidget);
   d->setupUi(this);
 
-  connect(d->CalculateButton, SIGNAL(clicked()),
-	  this, SLOT(CalculateButtonClick()));
+ // connect(d->LoadDicomDataButton, SIGNAL(clicked()),
+//	  this, SLOT(loadDicomData()));
   connect(d->CTVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
-	  this, SLOT(CTSelectionChanged(vtkMRMLNode*)));
+	  this, SLOT(OnCTSelectionChanged(vtkMRMLNode*)));
   connect(d->MRVolumeNodeSelector1, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
 	  this, SLOT(MR1SelectionChanged(vtkMRMLNode*)));
   connect(d->MRVolumeNodeSelector2, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
@@ -150,7 +149,7 @@ void qSlicerMeasureDistortionModuleWidget::setup()
   this->Superclass::setup();
 }
 //------------------------------------------------------------------------------
-void qSlicerMeasureDistortionModuleWidget::CTSelectionChanged(vtkMRMLNode*)
+void qSlicerMeasureDistortionModuleWidget::OnCTSelectionChanged(vtkMRMLNode*)
 {
 	Q_D(const qSlicerMeasureDistortionModuleWidget);
 
@@ -171,7 +170,7 @@ void qSlicerMeasureDistortionModuleWidget::CTSelectionChanged(vtkMRMLNode*)
 	}
 
 
-	qDebug() << "CTnode1" <<CTvolumeNodeID;
+//	qDebug() << CTnode;
 
 //	QMessageBox msgBox;
 //	msgBox.setWindowTitle("Info");
@@ -223,11 +222,9 @@ void qSlicerMeasureDistortionModuleWidget::MR2SelectionChanged(vtkMRMLNode*)
 	}
 }
 //-----------------------------------------------------------------------------
-void qSlicerMeasureDistortionModuleWidget::CalculateButtonClick()
-{
+//bool qSlicerMeasureDistortionModuleWidget::loadDicomData()
+//{
 //	Q_D(qSlicerMeasureDistortionModuleWidget);
 //	return d->selectModule("DICOM");
-
-	qDebug() << "CTnode2" << CTvolumeNodeID;
-}
+//}
 //-------------------------------------------------------------

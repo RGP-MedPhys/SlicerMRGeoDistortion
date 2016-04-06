@@ -130,7 +130,7 @@ void vtkSlicerMeasureDistortionLogic
 
 //}
 //------------------------------------------------------
-void vtkSlicerMeasureDistortionLogic::CreateReference(vtkMRMLNode* CTnode)
+void vtkSlicerMeasureDistortionLogic::CTSelectionChanged(vtkMRMLNode* CTnode)
 {
 	//Q_D(qSlicerMeasureDistortionModuleWidget);
 	
