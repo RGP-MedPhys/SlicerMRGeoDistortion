@@ -45,8 +45,8 @@
      </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>0</width>
-       <height>0</height>
+       <width>20</width>
+       <height>40</height>
       </size>
      </property>
     </spacer>
@@ -58,6 +58,7 @@
    <class>qMRMLNodeComboBox</class>
    <extends>QWidget</extends>
    <header>qMRMLNodeComboBox.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>qSlicerWidget</class>
@@ -70,6 +71,22 @@
   <include location="../qSlicerMeasureDistortionModule.qrc"/>
  </resources>
  <connections>
+  <connection>
+   <sender>qSlicerMeasureDistortionModuleWidget</sender>
+   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
+   <receiver>MRVolumeNodeSelector2</receiver>
+   <slot>setMRMLScene(vtkMRMLScene*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>262</x>
+     <y>159</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>262</x>
+     <y>100</y>
+    </hint>
+   </hints>
+  </connection>
   <connection>
    <sender>qSlicerMeasureDistortionModuleWidget</sender>
    <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
@@ -99,22 +116,6 @@
     <hint type="destinationlabel">
      <x>262</x>
      <y>74</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>qSlicerMeasureDistortionModuleWidget</sender>
-   <signal>mrmlSceneChanged(vtkMRMLScene*)</signal>
-   <receiver>MRVolumeNodeSelector2</receiver>
-   <slot>setMRMLScene(vtkMRMLScene*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>262</x>
-     <y>159</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>262</x>
-     <y>100</y>
     </hint>
    </hints>
   </connection>

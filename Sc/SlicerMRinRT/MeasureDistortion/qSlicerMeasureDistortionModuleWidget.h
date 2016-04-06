@@ -44,10 +44,10 @@ public:
   char *MR2volumeNodeID;
 
 public slots:
- //bool loadDicomData();
- void OnCTSelectionChanged(vtkMRMLNode*);
+ void CTSelectionChanged(vtkMRMLNode*);
  void MR1SelectionChanged(vtkMRMLNode*);
  void MR2SelectionChanged(vtkMRMLNode*);
+ void CalculateButtonClick();
 
 protected:
   QScopedPointer<qSlicerMeasureDistortionModuleWidgetPrivate> d_ptr;
