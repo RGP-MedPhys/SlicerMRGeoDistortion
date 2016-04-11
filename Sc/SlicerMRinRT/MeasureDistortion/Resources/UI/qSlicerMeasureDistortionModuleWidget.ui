@@ -15,28 +15,69 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="qMRMLNodeComboBox" name="CTVolumeNodeSelector">
-     <property name="nodeTypes">
-      <stringlist>
-       <string>vtkMRMLVolumeNode</string>
-      </stringlist>
-     </property>
-     <property name="addEnabled">
-      <bool>false</bool>
-     </property>
-     <property name="renameEnabled">
-      <bool>true</bool>
-     </property>
-     <property name="sizeAdjustPolicy">
-      <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="2" column="1">
+      <widget class="qMRMLNodeComboBox" name="MRVolumeNodeSelector2"/>
+     </item>
+     <item row="1" column="1">
+      <widget class="qMRMLNodeComboBox" name="MRVolumeNodeSelector1"/>
+     </item>
+     <item row="0" column="1">
+      <widget class="qMRMLNodeComboBox" name="CTVolumeNodeSelector">
+       <property name="nodeTypes">
+        <stringlist>
+         <string>vtkMRMLVolumeNode</string>
+        </stringlist>
+       </property>
+       <property name="addEnabled">
+        <bool>false</bool>
+       </property>
+       <property name="renameEnabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizeAdjustPolicy">
+        <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="CTNodeSelectorLabel">
+       <property name="text">
+        <string>Reference Image:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="MRNodeSelectorLabel1">
+       <property name="text">
+        <string>MR Image 1:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="MRNodeSelectorLabel2">
+       <property name="text">
+        <string>MR Image 2:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="CalculateButton">
+     <property name="text">
+      <string>Calculate Geometric  Distortion</string>
      </property>
     </widget>
-   </item>
-   <item>
-    <widget class="qMRMLNodeComboBox" name="MRVolumeNodeSelector1"/>
-   </item>
-   <item>
-    <widget class="qMRMLNodeComboBox" name="MRVolumeNodeSelector2"/>
    </item>
    <item>
     <spacer name="verticalSpacer">

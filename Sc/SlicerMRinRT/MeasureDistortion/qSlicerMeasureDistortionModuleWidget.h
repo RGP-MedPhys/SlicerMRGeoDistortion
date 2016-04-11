@@ -23,6 +23,7 @@
 
 #include "qSlicerMeasureDistortionModuleExport.h"
 #include <vtkMRMLNode.h>
+#include <vtkMRMLScalarVolumeNode.h>
 
 class qSlicerMeasureDistortionModuleWidgetPrivate;
 //class vtkMRMLNode;
@@ -39,13 +40,14 @@ public:
   qSlicerMeasureDistortionModuleWidget(QWidget *parent=0);
   virtual ~qSlicerMeasureDistortionModuleWidget();
 
-  char *CTvolumeNodeID;
-  char *MR1volumeNodeID;
-  char *MR2volumeNodeID;
+  vtkMRMLNode *CTNode;
+  vtkMRMLNode *MR1Node;
+  vtkMRMLNode *MR2Node;
+  vtkMRMLNode *ReferenceNode;
 
 public slots:
- //bool loadDicomData();
- void OnCTSelectionChanged(vtkMRMLNode*);
+ void CalculateDistortion();
+ void CTSelectionChanged(vtkMRMLNode*);
  void MR1SelectionChanged(vtkMRMLNode*);
  void MR2SelectionChanged(vtkMRMLNode*);
 

@@ -47,6 +47,7 @@
 
 
 
+
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_Measure Distortion
 class qSlicerMeasureDistortionModuleWidgetPrivate: public Ui_qSlicerMeasureDistortionModuleWidget
@@ -127,11 +128,10 @@ void qSlicerMeasureDistortionModuleWidget::setup()
 {
   Q_D(qSlicerMeasureDistortionModuleWidget);
   d->setupUi(this);
-
- // connect(d->LoadDicomDataButton, SIGNAL(clicked()),
-//	  this, SLOT(loadDicomData()));
+  connect(d->CalculateButton, SIGNAL(clicked()),
+	  this, SLOT(CalculateDistortion()));
   connect(d->CTVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
-	  this, SLOT(OnCTSelectionChanged(vtkMRMLNode*)));
+	  this, SLOT(CTSelectionChanged(vtkMRMLNode*)));
   connect(d->MRVolumeNodeSelector1, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
 	  this, SLOT(MR1SelectionChanged(vtkMRMLNode*)));
   connect(d->MRVolumeNodeSelector2, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
@@ -149,7 +149,7 @@ void qSlicerMeasureDistortionModuleWidget::setup()
   this->Superclass::setup();
 }
 //------------------------------------------------------------------------------
-void qSlicerMeasureDistortionModuleWidget::OnCTSelectionChanged(vtkMRMLNode*)
+void qSlicerMeasureDistortionModuleWidget::CTSelectionChanged(vtkMRMLNode*)
 {
 	Q_D(const qSlicerMeasureDistortionModuleWidget);
 
@@ -163,14 +163,16 @@ void qSlicerMeasureDistortionModuleWidget::OnCTSelectionChanged(vtkMRMLNode*)
 			// set it to be active in the slice windows
 			vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
 			vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
-			CTvolumeNodeID = d->CTVolumeNodeSelector->currentNode()->GetID();
-			selectionNode->SetReferenceActiveVolumeID(CTvolumeNodeID);
+			CTNode = d->CTVolumeNodeSelector->currentNode();
+			selectionNode->SetReferenceActiveVolumeID(CTNode->GetID());
 			appLogic->PropagateVolumeSelection();
+			//CTScalarVolumeNode->Copy(CTNode);
+			//qDebug() << CTScalarVolumeNode;
 		}
 	}
+//	qDebug() << CTNode;
 
-
-//	qDebug() << CTnode;
+//	qDebug() << CTvolumeNodeID;
 
 //	QMessageBox msgBox;
 //	msgBox.setWindowTitle("Info");
@@ -194,8 +196,8 @@ void qSlicerMeasureDistortionModuleWidget::MR1SelectionChanged(vtkMRMLNode*)
 			// set it to be active in the slice windows
 			vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
 			vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
-			MR1volumeNodeID = d->MRVolumeNodeSelector1->currentNode()->GetID();
-			selectionNode->SetReferenceActiveVolumeID(MR1volumeNodeID);
+			MR1Node = d->MRVolumeNodeSelector1->currentNode();
+			selectionNode->SetReferenceActiveVolumeID(MR1Node->GetID());
 			appLogic->PropagateVolumeSelection();
 		}
 	}
@@ -215,16 +217,26 @@ void qSlicerMeasureDistortionModuleWidget::MR2SelectionChanged(vtkMRMLNode*)
 			// set it to be active in the slice windows
 			vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
 			vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
-			MR2volumeNodeID = d->MRVolumeNodeSelector2->currentNode()->GetID();
-			selectionNode->SetReferenceActiveVolumeID(MR2volumeNodeID);
+			MR2Node = d->MRVolumeNodeSelector2->currentNode();
+			selectionNode->SetReferenceActiveVolumeID(MR2Node->GetID());
 			appLogic->PropagateVolumeSelection();
 		}
 	}
 }
 //-----------------------------------------------------------------------------
-//bool qSlicerMeasureDistortionModuleWidget::loadDicomData()
-//{
+void qSlicerMeasureDistortionModuleWidget::CalculateDistortion()
+{
 //	Q_D(qSlicerMeasureDistortionModuleWidget);
-//	return d->selectModule("DICOM");
-//}
+	vtkSlicerMeasureDistortionLogic* DistortionLogic;
+//	qDebug() << CTNode;
+	ReferenceNode = DistortionLogic->CalculateReference(CTNode);
+//	qDebug() << ReferenceNode;
+
+	vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
+	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
+	//CTNode = d->CTVolumeNodeSelector->currentNode();
+	selectionNode->SetReferenceActiveVolumeID(ReferenceNode->GetID());
+	selectionNode->SetActiveVolumeID(ReferenceNode->GetID());
+	appLogic->PropagateVolumeSelection();
+}
 //-------------------------------------------------------------

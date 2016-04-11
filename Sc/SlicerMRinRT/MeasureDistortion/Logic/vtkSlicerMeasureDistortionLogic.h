@@ -53,9 +53,10 @@ public:
   static vtkSlicerMeasureDistortionLogic *New();
   vtkTypeMacro(vtkSlicerMeasureDistortionLogic, vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
-  void CTSelectionChanged(vtkMRMLNode* CTnode);
   void SetVolumesLogic(vtkSlicerVolumesLogic* logic);
   vtkSlicerVolumesLogic* GetVolumesLogic();
+  vtkMRMLNode* CalculateReference(vtkMRMLNode*);
+  
 
 protected:
   vtkSlicerMeasureDistortionLogic();

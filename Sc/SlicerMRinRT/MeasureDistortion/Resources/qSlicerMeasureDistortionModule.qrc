@@ -1,6 +1,5 @@
 <RCC>
   <qresource>
     <file>Icons/MeasureDistortion.png</file>
-    <file>Images/SlicerLoadDicom-Original.png</file>
   </qresource>
 </RCC>
