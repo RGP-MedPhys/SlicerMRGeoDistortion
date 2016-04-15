@@ -36,16 +36,23 @@
 #include <vtkObjectFactory.h>
 #include <vtkimagedata.h>
 #include <vtkImageThreshold.h>
-
-
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkInteractorStyleImage.h>
-#include <vtkRenderer.h>
-#include <vtkImageMapper3D.h>
-#include <vtkImageActor.h>
+#include <vtkThreshold.h>
+#include "vtkPolyDataConnectivityFilter.h"
+#include "vtkConnectivityFilter.h"
+#include <vtkImageGradient.h>
+#include <vtkImageGradientMagnitude.h>
+#include <vtkImageNonMaximumSuppression.h>
 #include <vtkImageCast.h>
-#include <vtkImageMandelbrotSource.h>
+#include <vtkImageDataGeometryFilter.h>
+#include <vtkImageExport.h>
+
+#include <itkImage.h>
+#include <itkVTKImageImport.h>
+#include <vtkITKUtility.h>
+#include "itkConnectedComponentImageFilter.h"
+
+
+
 
 
 // STD includes
@@ -147,15 +154,13 @@ void vtkSlicerMeasureDistortionLogic
 //------------------------------------------------------
 vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CTNode)
 {
-//	vtkSmartPointer<vtkFloatArray> ReferenceCoords =
-//		vtkSmartPointer<vtkFloatArray>::New();
-//	ReferenceCoords->SetNumberOfComponents(3);
-//	ReferenceCoords->SetNumberOfTuples(5);
 	vtkNew<vtkMRMLDoubleArrayNode> ReferencCoordsNode;
-	vtkMRMLScalarVolumeNode *CTVolumeNode;	
+	vtkMRMLScalarVolumeNode *CTVolumeNode;
 	vtkMRMLNode *ReferenceNode;
+	vtkImageData* ReferenceImage;
+	vtkImageData* ReferenceImage1;
 	vtkImageData* CTImage;
-	double x[2]; double y[2]; double z[2];
+//	double x[2]; double y[2]; double z[2];
 
 	CTVolumeNode = vtkMRMLScalarVolumeNode::SafeDownCast(CTNode);
 	CTImage = CTVolumeNode->GetImageData();
@@ -163,38 +168,124 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 	int* Extent = CTImage->GetExtent();
 	double min = CTImage->GetScalarTypeMin();
 	double max = CTImage->GetScalarTypeMax();
-
 	//vtkMatrix4x4 *inputRASToIJK = vtkMatrix4x4::New();
-	ReferencCoordsNode->SetXYValue(0, 2.5e1, 3e1, 4.5e1);
-	ReferencCoordsNode->SetXYValue(1, 2.5, 3, 4.5);
+//	ReferencCoordsNode->SetXYValue(0, 2.5e1, 3e1, 4.5e1);
+//	ReferencCoordsNode->SetXYValue(1, 2.5, 3, 4.5);
 
+	//Thresholding
 	vtkMRMLScalarVolumeNode *ReferenceVolumeNode = CTVolumeNode;
-	vtkNew<vtkImageThreshold> CTThreshold; 
-
+	vtkNew<vtkImageThreshold> CTThreshold;
+	//vtkNew<vtkThreshold> CTThreshold;
 	CTThreshold->SetInputData(CTImage);
 	double lower = 56;
-
 	CTThreshold->ThresholdByUpper(lower);
 	CTThreshold->ReplaceInOn();
-	CTThreshold->SetInValue(1000);
-	CTThreshold->SetOutValue(0);
+	CTThreshold->SetInValue(CTImage->GetScalarTypeMax());
+	CTThreshold->SetOutValue(CTImage->GetScalarTypeMin());
 	CTThreshold->Update();
-
-	vtkImageData* ReferenceImage;
 	ReferenceImage = CTImage;
-		ReferenceImage = CTThreshold->GetOutput();
+	ReferenceImage = CTThreshold->GetOutput();
 
 
-	qDebug() << min;
-	qDebug() << max;
+	//NonMaximum Suppression
+	vtkNew<vtkImageGradient> gradientFilter;
+	gradientFilter->SetInputData(ReferenceImage);
+	vtkNew<vtkImageCast> gradientCastFilter;
+	gradientCastFilter->SetOutputScalarTypeToUnsignedShort();
+	gradientCastFilter->SetInputConnection(gradientFilter->GetOutputPort());
+	gradientCastFilter->Update();
+	vtkNew<vtkImageGradientMagnitude> gradientMagnitudeFilter;
+	gradientMagnitudeFilter->SetInputData(ReferenceImage);
+	vtkNew<vtkImageCast> gradientMagnitudeCastFilter;
+	gradientMagnitudeCastFilter->SetOutputScalarTypeToUnsignedShort();
+	gradientMagnitudeCastFilter->SetInputConnection(gradientMagnitudeFilter->GetOutputPort());
+	gradientMagnitudeCastFilter->Update();
+	vtkNew<vtkImageNonMaximumSuppression> suppressionFilter;
+	suppressionFilter->SetInputConnection(
+		0, gradientMagnitudeFilter->GetOutputPort());
+	suppressionFilter->SetInputConnection(
+		1, gradientFilter->GetOutputPort());
+	suppressionFilter->Update();
+	vtkNew<vtkImageCast> suppressionCastFilter;
+	suppressionCastFilter->SetOutputScalarTypeToUnsignedShort();
+	suppressionCastFilter->SetInputConnection(suppressionFilter->GetOutputPort());
+	suppressionFilter->SetDimensionality(2);
+	suppressionCastFilter->Update();
+	ReferenceImage1 = suppressionCastFilter->GetOutput();
+
+
+	//Connectivity
+	//vtkConnectivityFilter* connectivityFilter;
+	//vtkImageConnectivity* connectivityFilter;
+	//vtkNew<vtkImageDataGeometryFilter> imageDataGeometryFilter;
+	//imageDataGeometryFilter->SetInputData(ReferenceImage);
+	//imageDataGeometryFilter->Update();
+
+//	int dims[3];
+//	dims[0] = Extent[1] - Extent[0];
+//	dims[1] = Extent[3] - Extent[1];
+//	dims[2] = Extent[5] - Extent[4];
+//	unsigned char *cImage = new unsigned char[dims[0] * dims[1] * dims[2]];
+	vtkImageExport *exporter;
+	exporter = vtkImageExport::New();
+	exporter->SetInputData(ReferenceImage);
+//	exporter->ImageLowerLeftOn();
+//	exporter->Export(cImage);		
+	typedef itk::Image< unsigned short, 3 >  ImageType;
+	typedef itk::Image< unsigned short, 3 > OutputImageType;
+	typedef itk::VTKImageImport< ImageType> ImageImportType;
+	ImageImportType::Pointer importer = ImageImportType::New();
+	typedef itk::ConnectedComponentImageFilter <ImageType, OutputImageType >
+		ConnectedComponentImageFilterType;
+//	vtkNew<vtkITKImageToImageFilter> vtkITKFilter; 
+//	vtkITKFilter->SetInput(ReferenceImage);
+//	ReferenceImage=vtkITKFilter->GetOutput();
+	//vtkITKFilter->SetInput(ReferenceImage);
+	ImageType::Pointer itkImage;
+	qDebug() << "test";
+	//image = vtkITKFilter->GetOutput();
+	
+	qDebug() << "test";
+	ConnectPipelines(exporter, importer);
+	qDebug() << "test";
+	itkImage = importer->GetOutput();
+	ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();;
+	connected->SetInput(itkImage);
+	connected->Update();
+
+	qDebug() << "test";
+	qDebug() << connected->GetObjectCount();
+
+
+	//exporter->Delete();
+	//importer->Delete();
+	//connectivityFilter->SetInputConnection(CTThreshold->GetOutputPort());
+	//qDebug() << "test";
+	//connectivityFilter->SetExtractionModeToAllRegions();
+	//connectivityFilter->SetFunctionToMeasureIsland();
+
+	//qDebug() << "test";
+	//connectivityFilter->ColorRegionsOn();
+	//qDebug() << "test";
+	//connectivityFilter->Update();
+	//qDebug() << "test";
+	//int numCtrlPnts = connectivityFilter->GetNumberOfExtractedRegions();
+	//ReferenceImage = connectivityFilter->GetOutput();
+	//vtkUnstructuredGrid *ControlPoints = connectivityFilter->GetOutput();
+//	for (){
+//		connectivityFilter->InitializeSpecifiedRegionList();
+//		connectivityFilter->AddSpecifiedRegion(i);
+//		connectivityFilter->Modified();
+//		connectivityFilter->Update();
+//	}
+
+
+//	qDebug() << numCtrlPnts<<"\n";
+//	qDebug() << "test";
 	ReferenceVolumeNode->SetAndObserveImageData(ReferenceImage);
 	ReferenceNode = vtkMRMLNode::SafeDownCast(ReferenceVolumeNode);
 
-//	ReferencCoordsNode->GetXYValue(0, x, y, z);
-//	qDebug() << x[0] << y[0] << z[0] << "\n";
-//	ReferencCoordsNode->GetXYValue(1, x, y, z);
-	//qDebug() << x[0] << y[1] << z[1];
-	//vtkMRMLVolumeNode *ReferenceNode = CTVolumeNode;
+	exporter->Delete();
 	return ReferenceNode;
 }
 

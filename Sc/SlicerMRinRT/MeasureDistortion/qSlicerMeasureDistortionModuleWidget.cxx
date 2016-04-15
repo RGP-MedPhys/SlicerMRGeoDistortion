@@ -236,7 +236,7 @@ void qSlicerMeasureDistortionModuleWidget::CalculateDistortion()
 	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
 	//CTNode = d->CTVolumeNodeSelector->currentNode();
 	selectionNode->SetReferenceActiveVolumeID(ReferenceNode->GetID());
-	selectionNode->SetActiveVolumeID(ReferenceNode->GetID());
+	//selectionNode->SetActiveVolumeID(ReferenceNode->GetID());
 	appLogic->PropagateVolumeSelection();
 }
 //-------------------------------------------------------------

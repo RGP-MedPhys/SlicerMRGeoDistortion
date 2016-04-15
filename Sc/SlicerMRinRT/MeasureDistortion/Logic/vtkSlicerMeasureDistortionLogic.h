@@ -56,7 +56,6 @@ public:
   void SetVolumesLogic(vtkSlicerVolumesLogic* logic);
   vtkSlicerVolumesLogic* GetVolumesLogic();
   vtkMRMLNode* CalculateReference(vtkMRMLNode*);
-  
 
 protected:
   vtkSlicerMeasureDistortionLogic();
