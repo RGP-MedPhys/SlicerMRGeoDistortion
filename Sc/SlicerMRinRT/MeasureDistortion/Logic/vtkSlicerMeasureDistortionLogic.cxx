@@ -214,18 +214,7 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 	ReferenceImage1 = suppressionCastFilter->GetOutput();
 
 
-	//Connectivity
-	//vtkConnectivityFilter* connectivityFilter;
-	//vtkImageConnectivity* connectivityFilter;
-	//vtkNew<vtkImageDataGeometryFilter> imageDataGeometryFilter;
-	//imageDataGeometryFilter->SetInputData(ReferenceImage);
-	//imageDataGeometryFilter->Update();
-
-//	int dims[3];
-//	dims[0] = Extent[1] - Extent[0];
-//	dims[1] = Extent[3] - Extent[1];
-//	dims[2] = Extent[5] - Extent[4];
-//	unsigned char *cImage = new unsigned char[dims[0] * dims[1] * dims[2]];
+	//Establish pipeline connection between VTK and ITK
 	vtkImageExport *exporter;
 	exporter = vtkImageExport::New();
 	exporter->SetInputData(ReferenceImage);
@@ -235,43 +224,20 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 	typedef itk::Image< unsigned short, 3 > OutputImageType;
 	typedef itk::VTKImageImport< ImageType> ImageImportType;
 	ImageImportType::Pointer importer = ImageImportType::New();
+	ImageType::Pointer itkImage;
+	ConnectPipelines(exporter, importer);
+	itkImage = importer->GetOutput();
+
+
+	//ITK Connectivity Filter
 	typedef itk::ConnectedComponentImageFilter <ImageType, OutputImageType >
 		ConnectedComponentImageFilterType;
-//	vtkNew<vtkITKImageToImageFilter> vtkITKFilter; 
-//	vtkITKFilter->SetInput(ReferenceImage);
-//	ReferenceImage=vtkITKFilter->GetOutput();
-	//vtkITKFilter->SetInput(ReferenceImage);
-	ImageType::Pointer itkImage;
-	qDebug() << "test";
-	//image = vtkITKFilter->GetOutput();
-	
-	qDebug() << "test";
-	ConnectPipelines(exporter, importer);
-	qDebug() << "test";
-	itkImage = importer->GetOutput();
 	ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();;
 	connected->SetInput(itkImage);
 	connected->Update();
-
-	qDebug() << "test";
 	qDebug() << connected->GetObjectCount();
 
 
-	//exporter->Delete();
-	//importer->Delete();
-	//connectivityFilter->SetInputConnection(CTThreshold->GetOutputPort());
-	//qDebug() << "test";
-	//connectivityFilter->SetExtractionModeToAllRegions();
-	//connectivityFilter->SetFunctionToMeasureIsland();
-
-	//qDebug() << "test";
-	//connectivityFilter->ColorRegionsOn();
-	//qDebug() << "test";
-	//connectivityFilter->Update();
-	//qDebug() << "test";
-	//int numCtrlPnts = connectivityFilter->GetNumberOfExtractedRegions();
-	//ReferenceImage = connectivityFilter->GetOutput();
-	//vtkUnstructuredGrid *ControlPoints = connectivityFilter->GetOutput();
 //	for (){
 //		connectivityFilter->InitializeSpecifiedRegionList();
 //		connectivityFilter->AddSpecifiedRegion(i);
@@ -280,12 +246,11 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 //	}
 
 
-//	qDebug() << numCtrlPnts<<"\n";
-//	qDebug() << "test";
+	//Cleanup
+	exporter->Delete();
+
 	ReferenceVolumeNode->SetAndObserveImageData(ReferenceImage);
 	ReferenceNode = vtkMRMLNode::SafeDownCast(ReferenceVolumeNode);
-
-	exporter->Delete();
 	return ReferenceNode;
 }
 
