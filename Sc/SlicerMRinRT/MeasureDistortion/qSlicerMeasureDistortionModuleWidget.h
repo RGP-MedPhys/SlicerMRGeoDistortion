@@ -46,7 +46,10 @@ public:
   vtkMRMLNode *ReferenceNode;
 
 public slots:
- void CalculateDistortion();
+ void LoadReferenceClick();
+ //void LoadReferenceChanged();
+ void CalculateReferenceClick();
+ void CalculateDistortionClick();
  void CTSelectionChanged(vtkMRMLNode*);
  void MR1SelectionChanged(vtkMRMLNode*);
  void MR2SelectionChanged(vtkMRMLNode*);

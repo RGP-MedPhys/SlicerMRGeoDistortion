@@ -18,6 +18,8 @@
 // Qt includes
 #include <QDebug>
 #include <QMessageBox>
+#include <QFileDialog>
+
 
 // SlicerQt includes
 #include <qSlicerAbstractCoreModule.h>
@@ -129,7 +131,11 @@ void qSlicerMeasureDistortionModuleWidget::setup()
   Q_D(qSlicerMeasureDistortionModuleWidget);
   d->setupUi(this);
   connect(d->CalculateButton, SIGNAL(clicked()),
-	  this, SLOT(CalculateDistortion()));
+	  this, SLOT(CalculateDistortionClick()));
+  connect(d->GenerateReferenceButton, SIGNAL(clicked()),
+	  this, SLOT(CalculateReferenceClick()));
+  connect(d->LoadReferenceButton, SIGNAL(clicked()),
+	  this, SLOT(LoadReferenceClick()));
   connect(d->CTVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
 	  this, SLOT(CTSelectionChanged(vtkMRMLNode*)));
   connect(d->MRVolumeNodeSelector1, SIGNAL(currentNodeChanged(vtkMRMLNode*)),
@@ -224,13 +230,36 @@ void qSlicerMeasureDistortionModuleWidget::MR2SelectionChanged(vtkMRMLNode*)
 	}
 }
 //-----------------------------------------------------------------------------
-void qSlicerMeasureDistortionModuleWidget::CalculateDistortion()
+void qSlicerMeasureDistortionModuleWidget::LoadReferenceClick()
+{
+	Q_D(qSlicerMeasureDistortionModuleWidget);
+	QStringList fileName = QFileDialog::getOpenFileNames(this, tr("Open File"), "/path/to/file/", tr("XML Files (*.xml)"));
+	d->CurrentReferenceList->addItems(fileName);
+}
+//-------------------------------------------------------------
+void qSlicerMeasureDistortionModuleWidget::CalculateReferenceClick()
 {
 //	Q_D(qSlicerMeasureDistortionModuleWidget);
 	vtkSlicerMeasureDistortionLogic* DistortionLogic;
 //	qDebug() << CTNode;
 	ReferenceNode = DistortionLogic->CalculateReference(CTNode);
 //	qDebug() << ReferenceNode;
+
+	vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
+	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
+	//CTNode = d->CTVolumeNodeSelector->currentNode();
+	selectionNode->SetReferenceActiveVolumeID(ReferenceNode->GetID());
+	//selectionNode->SetActiveVolumeID(ReferenceNode->GetID());
+	appLogic->PropagateVolumeSelection();
+}
+//-------------------------------------------------------------
+void qSlicerMeasureDistortionModuleWidget::CalculateDistortionClick()
+{
+	//	Q_D(qSlicerMeasureDistortionModuleWidget);
+	vtkSlicerMeasureDistortionLogic* DistortionLogic;
+	//	qDebug() << CTNode;
+	//ReferenceNode = DistortionLogic->CalculateReference(CTNode);
+	//	qDebug() << ReferenceNode;
 
 	vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
 	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();

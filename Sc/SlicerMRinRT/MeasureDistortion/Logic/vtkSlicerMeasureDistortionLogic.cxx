@@ -45,11 +45,19 @@
 #include <vtkImageCast.h>
 #include <vtkImageDataGeometryFilter.h>
 #include <vtkImageExport.h>
+#include <vtkImageOpenClose3D.h>
 
 #include <itkImage.h>
 #include <itkVTKImageImport.h>
+#include <itkLabelObject.h>
+#include "itkLabelMap.h"
+#include "itkLabelImageToLabelMapFilter.h"
 #include <vtkITKUtility.h>
 #include "itkConnectedComponentImageFilter.h"
+#include "itkLabelGeometryImageFilter.h"
+#include "itkPoint.h"
+#include "itkPointSet.h"
+
 
 
 
@@ -164,6 +172,7 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 
 	CTVolumeNode = vtkMRMLScalarVolumeNode::SafeDownCast(CTNode);
 	CTImage = CTVolumeNode->GetImageData();
+	ReferenceImage = CTImage;
 	double* PxlSpacing = CTVolumeNode->GetSpacing();
 	int* Extent = CTImage->GetExtent();
 	double min = CTImage->GetScalarTypeMin();
@@ -172,46 +181,62 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 //	ReferencCoordsNode->SetXYValue(0, 2.5e1, 3e1, 4.5e1);
 //	ReferencCoordsNode->SetXYValue(1, 2.5, 3, 4.5);
 
+
+	//NonMaximum Suppression
+//	vtkNew<vtkImageGradient> gradientFilter;
+//	gradientFilter->SetInputData(ReferenceImage);
+//	gradientFilter->Update();
+//	vtkNew<vtkImageCast> gradientCastFilter;
+//	gradientCastFilter->SetOutputScalarTypeToUnsignedShort();
+//	gradientCastFilter->SetInputConnection(gradientFilter->GetOutputPort());
+//	gradientCastFilter->Update();
+//	vtkNew<vtkImageGradientMagnitude> gradientMagnitudeFilter;
+//	gradientMagnitudeFilter->SetInputData(ReferenceImage);
+//	gradientMagnitudeFilter->Update();
+//	vtkNew<vtkImageCast> gradientMagnitudeCastFilter;
+//	gradientMagnitudeCastFilter->SetOutputScalarTypeToUnsignedShort();
+//	gradientMagnitudeCastFilter->SetInputConnection(gradientMagnitudeFilter->GetOutputPort());
+//	gradientMagnitudeCastFilter->Update();
+//	vtkNew<vtkImageNonMaximumSuppression> suppressionFilter;
+//	suppressionFilter->SetInputConnection(
+//		0, gradientMagnitudeFilter->GetOutputPort());
+//	suppressionFilter->SetInputConnection(
+//		1, gradientFilter->GetOutputPort());
+//	suppressionFilter->Update();
+//	vtkNew<vtkImageCast> suppressionCastFilter;
+//	suppressionCastFilter->SetOutputScalarTypeToUnsignedShort();
+//	suppressionCastFilter->SetInputConnection(suppressionFilter->GetOutputPort());
+//	suppressionFilter->SetDimensionality(3);
+//	suppressionCastFilter->Update();
+//	ReferenceImage = suppressionCastFilter->GetOutput();
+
+	
 	//Thresholding
 	vtkMRMLScalarVolumeNode *ReferenceVolumeNode = CTVolumeNode;
 	vtkNew<vtkImageThreshold> CTThreshold;
 	//vtkNew<vtkThreshold> CTThreshold;
-	CTThreshold->SetInputData(CTImage);
+	CTThreshold->SetInputData(ReferenceImage);
 	double lower = 56;
 	CTThreshold->ThresholdByUpper(lower);
 	CTThreshold->ReplaceInOn();
-	CTThreshold->SetInValue(CTImage->GetScalarTypeMax());
-	CTThreshold->SetOutValue(CTImage->GetScalarTypeMin());
+	CTThreshold->SetInValue(ReferenceImage->GetScalarTypeMax());
+	CTThreshold->SetOutValue(ReferenceImage->GetScalarTypeMin());
 	CTThreshold->Update();
-	ReferenceImage = CTImage;
 	ReferenceImage = CTThreshold->GetOutput();
 
 
-	//NonMaximum Suppression
-	vtkNew<vtkImageGradient> gradientFilter;
-	gradientFilter->SetInputData(ReferenceImage);
-	vtkNew<vtkImageCast> gradientCastFilter;
-	gradientCastFilter->SetOutputScalarTypeToUnsignedShort();
-	gradientCastFilter->SetInputConnection(gradientFilter->GetOutputPort());
-	gradientCastFilter->Update();
-	vtkNew<vtkImageGradientMagnitude> gradientMagnitudeFilter;
-	gradientMagnitudeFilter->SetInputData(ReferenceImage);
-	vtkNew<vtkImageCast> gradientMagnitudeCastFilter;
-	gradientMagnitudeCastFilter->SetOutputScalarTypeToUnsignedShort();
-	gradientMagnitudeCastFilter->SetInputConnection(gradientMagnitudeFilter->GetOutputPort());
-	gradientMagnitudeCastFilter->Update();
-	vtkNew<vtkImageNonMaximumSuppression> suppressionFilter;
-	suppressionFilter->SetInputConnection(
-		0, gradientMagnitudeFilter->GetOutputPort());
-	suppressionFilter->SetInputConnection(
-		1, gradientFilter->GetOutputPort());
-	suppressionFilter->Update();
-	vtkNew<vtkImageCast> suppressionCastFilter;
-	suppressionCastFilter->SetOutputScalarTypeToUnsignedShort();
-	suppressionCastFilter->SetInputConnection(suppressionFilter->GetOutputPort());
-	suppressionFilter->SetDimensionality(2);
-	suppressionCastFilter->Update();
-	ReferenceImage1 = suppressionCastFilter->GetOutput();
+	//Remove background with morphological Open/Close
+	vtkNew<vtkImageOpenClose3D> openClose;
+	openClose->SetInputData(ReferenceImage);
+	openClose->SetOpenValue(ReferenceImage->GetScalarTypeMin());
+	openClose->SetCloseValue(ReferenceImage->GetScalarTypeMax());
+	openClose->SetKernelSize(5, 5, 3);
+	//openClose->ReleaseDataFlagOff();
+	openClose->Update();
+	ReferenceImage = openClose->GetOutput();
+	//openClose->GetCloseValue();
+	//openClose->GetOpenValue();
+
 
 
 	//Establish pipeline connection between VTK and ITK
@@ -224,7 +249,8 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 	typedef itk::Image< unsigned short, 3 > OutputImageType;
 	typedef itk::VTKImageImport< ImageType> ImageImportType;
 	ImageImportType::Pointer importer = ImageImportType::New();
-	ImageType::Pointer itkImage;
+	ImageType::Pointer itkImage=ImageType::New();
+	ImageType::Pointer labelImage = ImageType::New();;
 	ConnectPipelines(exporter, importer);
 	itkImage = importer->GetOutput();
 
@@ -235,15 +261,47 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 	ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();;
 	connected->SetInput(itkImage);
 	connected->Update();
+	labelImage=connected->GetOutput();
 	qDebug() << connected->GetObjectCount();
 
 
-//	for (){
-//		connectivityFilter->InitializeSpecifiedRegionList();
-//		connectivityFilter->AddSpecifiedRegion(i);
-//		connectivityFilter->Modified();
-//		connectivityFilter->Update();
-//	}
+	//LabelImage Geometry processing
+	typedef itk::LabelGeometryImageFilter< ImageType > LabelGeometryImageFilterType;
+	LabelGeometryImageFilterType::Pointer labelGeometryImageFilter = LabelGeometryImageFilterType::New();
+	labelGeometryImageFilter->SetInput(labelImage);
+	//labelGeometryImageFilter->SetIntensityInput(itkImage);
+	labelGeometryImageFilter->Update();
+	LabelGeometryImageFilterType::LabelsType allLabels =
+		labelGeometryImageFilter->GetLabels();
+	typedef itk::PointSet< float ,3 >   PointSetType;
+	typedef PointSetType::PointType PointType;
+	typedef PointSetType::PointsContainerPointer PointsContainerPointer;
+	PointSetType::Pointer  PointSet = PointSetType::New();;
+	PointsContainerPointer  points = PointSet->GetPoints();
+	PointType p;
+	int j = 0;
+	
+	LabelGeometryImageFilterType::LabelsType::iterator allLabelsIt;
+	for (allLabelsIt = allLabels.begin(); allLabelsIt != allLabels.end(); allLabelsIt++)
+	{	
+		LabelGeometryImageFilterType::LabelPixelType labelValue = *allLabelsIt;
+		p=labelGeometryImageFilter->GetCentroid(labelValue);
+		
+		
+		if (((labelGeometryImageFilter->GetVolume(labelValue)) < 26) || (labelGeometryImageFilter->GetEccentricity(labelValue) > 0.8))
+		{
+		}
+		else
+		{
+			qDebug() << "Volume: " << labelGeometryImageFilter->GetVolume(labelValue);
+			qDebug() << "Eccentricity: " << labelGeometryImageFilter->GetEccentricity(labelValue);
+			qDebug() << "j" << j;
+			points->InsertElement(j, p);
+			j++;
+		}
+
+	}
+
 
 
 	//Cleanup

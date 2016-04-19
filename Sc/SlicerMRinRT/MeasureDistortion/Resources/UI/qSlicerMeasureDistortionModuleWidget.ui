@@ -16,13 +16,13 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="2" column="1">
+     <item row="5" column="2">
       <widget class="qMRMLNodeComboBox" name="MRVolumeNodeSelector2"/>
      </item>
-     <item row="1" column="1">
+     <item row="3" column="2">
       <widget class="qMRMLNodeComboBox" name="MRVolumeNodeSelector1"/>
      </item>
-     <item row="0" column="1">
+     <item row="0" column="2">
       <widget class="qMRMLNodeComboBox" name="CTVolumeNodeSelector">
        <property name="nodeTypes">
         <stringlist>
@@ -40,6 +40,23 @@
        </property>
       </widget>
      </item>
+     <item row="1" column="0" colspan="3">
+      <widget class="QPushButton" name="GenerateReferenceButton">
+       <property name="text">
+        <string>Generate Reference</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="MRNodeSelectorLabel1">
+       <property name="text">
+        <string>MR Image 1:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="0">
       <widget class="QLabel" name="CTNodeSelectorLabel">
        <property name="text">
@@ -50,10 +67,10 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="MRNodeSelectorLabel1">
+     <item row="5" column="0">
+      <widget class="QLabel" name="MRNodeSelectorLabel2">
        <property name="text">
-        <string>MR Image 1:</string>
+        <string>MR Image 2:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -61,12 +78,31 @@
       </widget>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="MRNodeSelectorLabel2">
+      <widget class="QPushButton" name="LoadReferenceButton">
        <property name="text">
-        <string>MR Image 2:</string>
+        <string>Load Reference</string>
        </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
+      </widget>
+     </item>
+     <item row="2" column="1" colspan="2">
+      <widget class="QListWidget" name="CurrentReferenceList">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>20</height>
+        </size>
        </property>
       </widget>
      </item>
