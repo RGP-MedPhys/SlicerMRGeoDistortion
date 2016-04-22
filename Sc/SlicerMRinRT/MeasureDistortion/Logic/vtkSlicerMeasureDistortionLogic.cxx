@@ -15,6 +15,10 @@
 
 ==============================================================================*/
 
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QDebug>
+
 // MeasureDistortion Logic includes
 #include "vtkSlicerMeasureDistortionLogic.h"
 #include "vtkSlicerVolumesLogic.h"
@@ -25,7 +29,7 @@
 #include <vtkMRMLSliceNode.h>
 #include <vtkMRMLScalarVolumeNode.h>
 #include <vtkMRMLDoubleArrayNode.h>
-#include <QDebug>
+
 
 
 // VTK includes
@@ -46,7 +50,10 @@
 #include <vtkImageDataGeometryFilter.h>
 #include <vtkImageExport.h>
 #include <vtkImageOpenClose3D.h>
+#include <vtkXMLPolyDataWriter.h>
+#include <vtkXMLPolyDataReader.h>
 
+// ITK includes
 #include <itkImage.h>
 #include <itkVTKImageImport.h>
 #include <itkLabelObject.h>
@@ -57,6 +64,7 @@
 #include "itkLabelGeometryImageFilter.h"
 #include "itkPoint.h"
 #include "itkPointSet.h"
+
 
 
 
@@ -161,6 +169,7 @@ void vtkSlicerMeasureDistortionLogic
 //}
 //------------------------------------------------------
 vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CTNode)
+//vtkPolyData* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CTNode)
 {
 	vtkNew<vtkMRMLDoubleArrayNode> ReferencCoordsNode;
 	vtkMRMLScalarVolumeNode *CTVolumeNode;
@@ -213,7 +222,9 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 	
 	//Thresholding
 	vtkMRMLScalarVolumeNode *ReferenceVolumeNode = CTVolumeNode;
-	vtkNew<vtkImageThreshold> CTThreshold;
+	//vtkNew<vtkImageThreshold> CTThreshold;
+	vtkSmartPointer<vtkImageThreshold> CTThreshold =
+		vtkSmartPointer<vtkImageThreshold>::New();
 	//vtkNew<vtkThreshold> CTThreshold;
 	CTThreshold->SetInputData(ReferenceImage);
 	double lower = 56;
@@ -226,7 +237,9 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 
 
 	//Remove background with morphological Open/Close
-	vtkNew<vtkImageOpenClose3D> openClose;
+	vtkSmartPointer<vtkImageOpenClose3D> openClose =
+		vtkSmartPointer<vtkImageOpenClose3D>::New();
+	//vtkImageOpenClose3D* openClose;
 	openClose->SetInputData(ReferenceImage);
 	openClose->SetOpenValue(ReferenceImage->GetScalarTypeMin());
 	openClose->SetCloseValue(ReferenceImage->GetScalarTypeMax());
@@ -236,7 +249,7 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 	ReferenceImage = openClose->GetOutput();
 	//openClose->GetCloseValue();
 	//openClose->GetOpenValue();
-
+	qDebug() << "test";
 
 
 	//Establish pipeline connection between VTK and ITK
@@ -262,7 +275,8 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 	connected->SetInput(itkImage);
 	connected->Update();
 	labelImage=connected->GetOutput();
-	qDebug() << connected->GetObjectCount();
+	//qDebug() << connected->GetObjectCount();
+	vtkIdType numPoints = connected->GetObjectCount();
 
 
 	//LabelImage Geometry processing
@@ -276,10 +290,26 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 	typedef itk::PointSet< float ,3 >   PointSetType;
 	typedef PointSetType::PointType PointType;
 	typedef PointSetType::PointsContainerPointer PointsContainerPointer;
-	PointSetType::Pointer  PointSet = PointSetType::New();;
-	PointsContainerPointer  points = PointSet->GetPoints();
+	//PointSetType::Pointer  PointSet = PointSetType::New();;
+	//PointsContainerPointer  points = PointSet->GetPoints();
 	PointType p;
-	int j = 0;
+	
+	//vtkPointSet* ReferencePoints;
+	vtkSmartPointer<vtkPoints> points =
+		vtkSmartPointer<vtkPoints>::New();
+	//points->SetNumberOfPoints(1);
+//	typedef itk::Mesh< float, 3 >   MeshType;
+	//MeshType::Pointer  mesh = MeshType::New();
+	qDebug() << numPoints;
+	//points->SetNumberOfPoints(numPoints);
+	//qDebug() << "test1";
+
+
+	vtkIdType j = 0;
+	float p0[3];
+	
+	//p0[0] = 1; p0[1] = 1; p0[2] = 1;
+	//points->SetPoint(j, p0);
 	
 	LabelGeometryImageFilterType::LabelsType::iterator allLabelsIt;
 	for (allLabelsIt = allLabels.begin(); allLabelsIt != allLabels.end(); allLabelsIt++)
@@ -293,23 +323,108 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 		}
 		else
 		{
+			
 			qDebug() << "Volume: " << labelGeometryImageFilter->GetVolume(labelValue);
 			qDebug() << "Eccentricity: " << labelGeometryImageFilter->GetEccentricity(labelValue);
 			qDebug() << "j" << j;
-			points->InsertElement(j, p);
+			qDebug() << "point0:" << p[0];
+			qDebug() << "point1:" << p[1];
+			qDebug() << "point2:" << p[2];
+			p0[0] = p[0];
+			p0[1] = p[1];
+			p0[2] = p[2];
+			points->InsertNextPoint(p0);
 			j++;
 		}
 
 	}
 
 
+	//Output
+	vtkSmartPointer<vtkXMLPolyDataWriter> writer =
+		vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+	vtkSmartPointer<vtkPolyData> CTpolydata =
+		vtkSmartPointer<vtkPolyData>::New();
+
+	CTpolydata->SetPoints(points);
+	writer->SetFileName("Reference.vtp");
+	writer->SetInputData(CTpolydata);
+	writer->Write();
+	QString filepath = QDir::cleanPath(QDir::currentPath() + QDir::separator() + "Reference.vtp");
+	QMessageBox msgBox;
+	msgBox.setWindowTitle("Reference Saved");
+	msgBox.setInformativeText("Reference has been saved to:");
+	msgBox.setDetailedText(filepath);
+	msgBox.exec();
+
 
 	//Cleanup
 	exporter->Delete();
+	//polydata->Delete();
+	//writer->Delete();
 
 	ReferenceVolumeNode->SetAndObserveImageData(ReferenceImage);
 	ReferenceNode = vtkMRMLNode::SafeDownCast(ReferenceVolumeNode);
 	return ReferenceNode;
+	//return CTpolydata;
 }
 
+//------------------------------------------------------------------------------
+vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* MR1Node, vtkMRMLNode* MR2Node){
+	
+	vtkSmartPointer<vtkXMLPolyDataReader> reader =
+		vtkSmartPointer<vtkXMLPolyDataReader>::New();
+	vtkSmartPointer<vtkPolyData> CTpolydata =
+		vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkPolyData> Difference1 =
+		vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkPolyData> Difference2 =
+		vtkSmartPointer<vtkPolyData>::New();
+	vtkMRMLNode *GNLDistortionNode;
+	
+	//Find MR Center Control Points
+
+
+	//Read Reference Points
+	//	double *ptest;
+		reader->SetFileName("Reference.vtp");
+		reader->Update();
+		CTpolydata = reader->GetOutput();
+	//	ptest = polydata->GetPoint(0);
+	//	qDebug() << "point0:" << ptest[0];
+	//	qDebug() << "point1:" << ptest[1];
+	//	qDebug() << "point2:" << ptest[2];
+
+	//Transform Reference Coordinates 
+	
+	//Calculate MR1 Centroid positions and Difference from Reference
+		//Difference1 = CalculateMRCentroids(MR1Node, CTpolydata);
+
+	//Calculate MR2 Centroid positions and Difference from Reference
+		//Difference2 = CalculateMRCentroids(MR2Node, CTpolydata);
+
+	//Apply Mask
+
+
+	//Calculate Sequence Dependent Distortion
+
+
+	//Remove Sequence Dependent Distortion from Total Distortion
+
+
+	//Interpolate Distortion Map
+
+
+	
+
+	return GNLDistortionNode;
+}
+//-----------------------------------------------------------------------------
+vtkPolyData* vtkSlicerMeasureDistortionLogic::CalculateMRCentroids(vtkMRMLNode* MRNode, vtkPolyData*  CTpolydata){
+	vtkSmartPointer<vtkPolyData> MRpolydata =
+		vtkSmartPointer<vtkPolyData>::New();
+
+
+	return MRpolydata;
+}
 //------------------------------------------------------------------------------

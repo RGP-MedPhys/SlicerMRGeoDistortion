@@ -18,6 +18,8 @@
 #ifndef __qSlicerMeasureDistortionModuleWidget_h
 #define __qSlicerMeasureDistortionModuleWidget_h
 
+#include "vtkPolyData.h"
+
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
 
@@ -44,6 +46,7 @@ public:
   vtkMRMLNode *MR1Node;
   vtkMRMLNode *MR2Node;
   vtkMRMLNode *ReferenceNode;
+  vtkMRMLNode *GNLDistortionNode;
 
 public slots:
  void LoadReferenceClick();

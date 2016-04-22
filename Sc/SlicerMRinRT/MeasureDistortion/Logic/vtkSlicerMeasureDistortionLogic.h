@@ -29,6 +29,7 @@
 
 #include "qSlicerAbstractModuleWidget.h"
 
+#include "vtkPolyData.h"
 
 // MRML includes
 #include "vtkMRML.h"
@@ -48,6 +49,7 @@ class VTK_SLICER_MEASUREDISTORTION_MODULE_LOGIC_EXPORT vtkSlicerMeasureDistortio
   public vtkSlicerModuleLogic
 {
 
+
 public:
 
   static vtkSlicerMeasureDistortionLogic *New();
@@ -56,6 +58,10 @@ public:
   void SetVolumesLogic(vtkSlicerVolumesLogic* logic);
   vtkSlicerVolumesLogic* GetVolumesLogic();
   vtkMRMLNode* CalculateReference(vtkMRMLNode*);
+ // vtkPolyData* CalculateReference(vtkMRMLNode*);
+  vtkMRMLNode* CalculateDistortion(vtkMRMLNode*, vtkMRMLNode*);
+  vtkPolyData* CalculateMRCentroids(vtkMRMLNode*, vtkPolyData* );
+  
 
 protected:
   vtkSlicerMeasureDistortionLogic();

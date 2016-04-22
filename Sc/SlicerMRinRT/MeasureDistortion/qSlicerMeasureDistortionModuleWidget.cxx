@@ -46,6 +46,8 @@
 #include <vtkMRMLApplicationLogic.h>
 #include "vtkSlicerMeasureDistortionLogic.h"
 
+#include <vtkXMLPolyDataWriter.h>
+
 
 
 
@@ -232,18 +234,18 @@ void qSlicerMeasureDistortionModuleWidget::MR2SelectionChanged(vtkMRMLNode*)
 //-----------------------------------------------------------------------------
 void qSlicerMeasureDistortionModuleWidget::LoadReferenceClick()
 {
-	Q_D(qSlicerMeasureDistortionModuleWidget);
-	QStringList fileName = QFileDialog::getOpenFileNames(this, tr("Open File"), "/path/to/file/", tr("XML Files (*.xml)"));
-	d->CurrentReferenceList->addItems(fileName);
+	Q_D(qSlicerMeasureDistortionModuleWidget); 
+	QStringList path = QFileDialog::getOpenFileNames(this, tr("Open File"), "/path/to/file/", tr("Points Files (*.vtp)"));
+	d->CurrentReferenceList->addItems(path);
 }
+
 //-------------------------------------------------------------
 void qSlicerMeasureDistortionModuleWidget::CalculateReferenceClick()
 {
-//	Q_D(qSlicerMeasureDistortionModuleWidget);
+	Q_D(qSlicerMeasureDistortionModuleWidget);
 	vtkSlicerMeasureDistortionLogic* DistortionLogic;
-//	qDebug() << CTNode;
+	vtkPolyData* CTpolydata;
 	ReferenceNode = DistortionLogic->CalculateReference(CTNode);
-//	qDebug() << ReferenceNode;
 
 	vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
 	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
@@ -255,17 +257,21 @@ void qSlicerMeasureDistortionModuleWidget::CalculateReferenceClick()
 //-------------------------------------------------------------
 void qSlicerMeasureDistortionModuleWidget::CalculateDistortionClick()
 {
-	//	Q_D(qSlicerMeasureDistortionModuleWidget);
+	Q_D(qSlicerMeasureDistortionModuleWidget);
 	vtkSlicerMeasureDistortionLogic* DistortionLogic;
 	//	qDebug() << CTNode;
-	//ReferenceNode = DistortionLogic->CalculateReference(CTNode);
+	QList<QListWidgetItem *> ReferenceFile = d->CurrentReferenceList->selectedItems();
+	if (ReferenceFile.size() != 1) {
+		qDebug("You must select 1 reference file");
+		return;
+	}
+	//GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node,MR2Node);
 	//	qDebug() << ReferenceNode;
 
-	vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
-	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
-	//CTNode = d->CTVolumeNodeSelector->currentNode();
-	selectionNode->SetReferenceActiveVolumeID(ReferenceNode->GetID());
-	//selectionNode->SetActiveVolumeID(ReferenceNode->GetID());
-	appLogic->PropagateVolumeSelection();
+	//Display Distortion Map
+	//vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
+	//vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
+	//selectionNode->SetReferenceActiveVolumeID(GNLDistortionNode->GetID());
+	//appLogic->PropagateVolumeSelection();
 }
 //-------------------------------------------------------------
