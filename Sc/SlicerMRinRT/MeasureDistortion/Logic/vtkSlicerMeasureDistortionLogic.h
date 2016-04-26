@@ -30,6 +30,9 @@
 #include "qSlicerAbstractModuleWidget.h"
 
 #include "vtkPolyData.h"
+#include <vtkDenseArray.h>
+#include <vnl/vnl_matrix.h>
+#include <vnl/vnl_vector.h>
 
 // MRML includes
 #include "vtkMRML.h"
@@ -61,6 +64,11 @@ public:
  // vtkPolyData* CalculateReference(vtkMRMLNode*);
   vtkMRMLNode* CalculateDistortion(vtkMRMLNode*, vtkMRMLNode*);
   vtkPolyData* CalculateMRCentroids(vtkMRMLNode*, vtkPolyData* );
+  //vtkMRMLNode* Distortion_polyfitSVD(vtkPolyData*, vtkDenseArray<double>*, int*, int);
+  void Distortion_polyfitSVD(vtkPolyData*, vtkDenseArray<double>*, int*, int);
+  vnl_matrix<double> Fit3DPolySVD(vtkPolyData*, vtkDenseArray<double>*, int);
+  double* Eval3DPolySVD(int*, vnl_matrix<double>, int);
+  vnl_vector<double> vnl_vectorpow(vnl_vector<double>,int);
   
 
 protected:

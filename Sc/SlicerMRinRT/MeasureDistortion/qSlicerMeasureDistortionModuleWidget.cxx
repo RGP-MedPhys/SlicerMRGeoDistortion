@@ -235,7 +235,7 @@ void qSlicerMeasureDistortionModuleWidget::MR2SelectionChanged(vtkMRMLNode*)
 void qSlicerMeasureDistortionModuleWidget::LoadReferenceClick()
 {
 	Q_D(qSlicerMeasureDistortionModuleWidget); 
-	QStringList path = QFileDialog::getOpenFileNames(this, tr("Open File"), "/path/to/file/", tr("Points Files (*.vtp)"));
+	QStringList path = QFileDialog::getOpenFileNames(this, tr("Open File"), "C:/S4R/Slicer-build", tr("Points Files (*.vtp)"));
 	d->CurrentReferenceList->addItems(path);
 }
 
@@ -265,13 +265,14 @@ void qSlicerMeasureDistortionModuleWidget::CalculateDistortionClick()
 		qDebug("You must select 1 reference file");
 		return;
 	}
-	//GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node,MR2Node);
+	GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node,MR1Node);
+	//GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node, MR2Node);
 	//	qDebug() << ReferenceNode;
 
 	//Display Distortion Map
-	//vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
-	//vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
-	//selectionNode->SetReferenceActiveVolumeID(GNLDistortionNode->GetID());
-	//appLogic->PropagateVolumeSelection();
+	vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
+	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
+	selectionNode->SetReferenceActiveVolumeID(GNLDistortionNode->GetID());
+	appLogic->PropagateVolumeSelection();
 }
 //-------------------------------------------------------------

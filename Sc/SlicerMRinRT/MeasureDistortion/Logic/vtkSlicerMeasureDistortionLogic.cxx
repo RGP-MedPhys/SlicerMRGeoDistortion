@@ -52,6 +52,13 @@
 #include <vtkImageOpenClose3D.h>
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLPolyDataReader.h>
+#include <vtkKdTreePointLocator.h>
+#include <vtkImageMathematics.h>
+#include <vtkMath.h>
+#include <vtkDenseArray.h>
+#include <vnl/vnl_matrix.h>
+#include <vnl/vnl_vector.h>
+
 
 // ITK includes
 #include <itkImage.h>
@@ -339,6 +346,9 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 
 	}
 
+	
+
+
 
 	//Output
 	vtkSmartPointer<vtkXMLPolyDataWriter> writer =
@@ -382,20 +392,200 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 		vtkSmartPointer<vtkPolyData>::New();
 	vtkMRMLNode *GNLDistortionNode;
 	
-	//Find MR Center Control Points
-
+	
 
 	//Read Reference Points
 	//	double *ptest;
 		reader->SetFileName("Reference.vtp");
 		reader->Update();
 		CTpolydata = reader->GetOutput();
+		vtkMRMLScalarVolumeNode *MR1VolumeNode;
+		vtkImageData *MR1Image;
+		vtkImageData *ThresholdImage;
+		MR1VolumeNode = vtkMRMLScalarVolumeNode::SafeDownCast(MR1Node);
+		MR1Image = MR1VolumeNode->GetImageData();
+
+
+	//Find MR Center Control Points (closest CP to isocenter)
+		vtkSmartPointer<vtkKdTreePointLocator> KdTree =
+			vtkSmartPointer<vtkKdTreePointLocator>::New();
+		vtkSmartPointer<vtkImageThreshold> MRThreshold =
+			vtkSmartPointer<vtkImageThreshold>::New();
+
+		MRThreshold->SetInputData(MR1Image);
+		double lower = 100;
+		MRThreshold->ThresholdByUpper(lower);
+		MRThreshold->ReplaceInOn();
+		MRThreshold->SetInValue(MR1Image->GetScalarTypeMax());
+		MRThreshold->SetOutValue(MR1Image->GetScalarTypeMin());
+		MRThreshold->Update();
+		ThresholdImage = MRThreshold->GetOutput();
+
+		
+		
+		double iso[3];
+		MR1VolumeNode->GetOrigin(iso);
+		double* PxlSpacing = MR1VolumeNode->GetSpacing();
+		int* Extent = MR1Image->GetExtent();
+
+		//Remove background with morphological Open/Close
+		vtkSmartPointer<vtkImageOpenClose3D> openClose =
+			vtkSmartPointer<vtkImageOpenClose3D>::New();
+		//vtkImageOpenClose3D* openClose;
+		openClose->SetInputData(ThresholdImage);
+		openClose->SetOpenValue(ThresholdImage->GetScalarTypeMin());
+		openClose->SetCloseValue(ThresholdImage->GetScalarTypeMax());
+		openClose->SetKernelSize(5, 5, 3);
+		//openClose->ReleaseDataFlagOff();
+		openClose->Update();
+		ThresholdImage = openClose->GetOutput();
+
+
+		//Establish pipeline connection between VTK and ITK
+		vtkImageExport *exporter;
+		exporter = vtkImageExport::New();
+		exporter->SetInputData(ThresholdImage);
+		//	exporter->ImageLowerLeftOn();
+		//	exporter->Export(cImage);		
+		typedef itk::Image< unsigned short, 3 >  ImageType;
+		typedef itk::Image< unsigned short, 3 > OutputImageType;
+		typedef itk::VTKImageImport< ImageType> ImageImportType;
+		ImageImportType::Pointer importer = ImageImportType::New();
+		ImageType::Pointer itkImage = ImageType::New();
+		ImageType::Pointer labelImage = ImageType::New();;
+		ConnectPipelines(exporter, importer);
+		itkImage = importer->GetOutput();
+
+
+		//ITK Connectivity Filter
+		typedef itk::ConnectedComponentImageFilter <ImageType, OutputImageType >
+			ConnectedComponentImageFilterType;
+		ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();;
+		connected->SetInput(itkImage);
+		connected->Update();
+		labelImage = connected->GetOutput();
+		//qDebug() << connected->GetObjectCount();
+		vtkIdType numPoints = connected->GetObjectCount();
+
+
+		//LabelImage Geometry processing
+		typedef itk::LabelGeometryImageFilter< ImageType > LabelGeometryImageFilterType;
+		LabelGeometryImageFilterType::Pointer labelGeometryImageFilter = LabelGeometryImageFilterType::New();
+		labelGeometryImageFilter->SetInput(labelImage);
+		//labelGeometryImageFilter->SetIntensityInput(itkImage);
+		labelGeometryImageFilter->Update();
+		LabelGeometryImageFilterType::LabelsType allLabels =
+			labelGeometryImageFilter->GetLabels();
+		typedef itk::PointSet< float, 3 >   PointSetType;
+		typedef PointSetType::PointType PointType;
+		typedef PointSetType::PointsContainerPointer PointsContainerPointer;
+		//PointSetType::Pointer  PointSet = PointSetType::New();;
+		//PointsContainerPointer  points = PointSet->GetPoints();
+		PointType p;
+
+		//vtkPointSet* ReferencePoints;
+		vtkSmartPointer<vtkPoints> points =
+			vtkSmartPointer<vtkPoints>::New();
+		//points->SetNumberOfPoints(1);
+		//	typedef itk::Mesh< float, 3 >   MeshType;
+		//MeshType::Pointer  mesh = MeshType::New();
+		qDebug() << numPoints;
+		//points->SetNumberOfPoints(numPoints);
+		//qDebug() << "test1";
+
+
+		vtkIdType j = 0;
+		float p0[3];
+
+		//p0[0] = 1; p0[1] = 1; p0[2] = 1;
+		//points->SetPoint(j, p0);
+
+		LabelGeometryImageFilterType::LabelsType::iterator allLabelsIt;
+		for (allLabelsIt = allLabels.begin(); allLabelsIt != allLabels.end(); allLabelsIt++)
+		{
+			LabelGeometryImageFilterType::LabelPixelType labelValue = *allLabelsIt;
+			p = labelGeometryImageFilter->GetCentroid(labelValue);
+
+
+			if (((labelGeometryImageFilter->GetVolume(labelValue)) < 26) || (labelGeometryImageFilter->GetEccentricity(labelValue) > 0.8))
+			{
+			}
+			else
+			{
+
+				qDebug() << "Volume: " << labelGeometryImageFilter->GetVolume(labelValue);
+				qDebug() << "Eccentricity: " << labelGeometryImageFilter->GetEccentricity(labelValue);
+				qDebug() << "j" << j;
+				qDebug() << "point0:" << p[0];
+				qDebug() << "point1:" << p[1];
+				qDebug() << "point2:" << p[2];
+				p0[0] = p[0];
+				p0[1] = p[1];
+				p0[2] = p[2];
+				points->InsertNextPoint(p0);
+				j++;
+			}
+
+		}
+
+		//Output
+		vtkSmartPointer<vtkXMLPolyDataWriter> writer =
+			vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+		vtkSmartPointer<vtkPolyData> MR1polydata =
+			vtkSmartPointer<vtkPolyData>::New();
+
+		// Find center of image
+		int center[2];
+		center[0] = (Extent[1] + Extent[0]) / 2;
+		center[1] = (Extent[3] + Extent[2]) / 2;
+		//center[2] = (Extent[5] + Extent[4]) / 2;
+		// Pick a radius for the circle
+		int radius = 5;
+		vtkImageData *TestImage=ThresholdImage;
+		vtkSmartPointer<vtkImageMathematics> imageMath =
+			vtkSmartPointer<vtkImageMathematics>::New();
+		imageMath->SetOperationToMultiplyByK();
+		imageMath->SetConstantK(0.0);
+		imageMath->SetInputData(ThresholdImage);
+		imageMath->Update();
+		TestImage = imageMath->GetOutput();
+		MR1polydata->SetPoints(points);
+
+		//for (vtkIdType i = 0; i < points->GetNumberOfPoints(); i++)
+		//{
+		//	double p[3];
+		//	MR1polydata->GetPoint(i, p);
+		//	TestImage->SetScalarComponentFromDouble(round(p[0]), round(p[1]), round(p[2]),0, ThresholdImage->GetScalarTypeMax());
+
+
+		//}
+
+		//ThresholdImage = TestImage;
+		double bounds[6];
+		MR1polydata->GetBounds(bounds);
+		//KdTree->SetDataSet();
+
+
+
+		qDebug() << "iso0" << iso[0];
+		qDebug() << "iso1" << iso[1];
+		qDebug() << "iso2" << iso[2];
+		qDebug() << "bounds0" << bounds[0];
+		qDebug() << "bounds1" << bounds[1];
+		qDebug() << "bounds2" << bounds[2];
+		qDebug() << "bounds3" << bounds[3];
+		qDebug() << "bounds4" << bounds[4];
+		qDebug() << "bounds5" << bounds[5];
+
 	//	ptest = polydata->GetPoint(0);
 	//	qDebug() << "point0:" << ptest[0];
 	//	qDebug() << "point1:" << ptest[1];
 	//	qDebug() << "point2:" << ptest[2];
 
-	//Transform Reference Coordinates 
+	//Calculate  which control point this is on Reference (Currently phantom dependent)
+
+	//Transform Reference Coordinates to MR Coordinates
+
 	
 	//Calculate MR1 Centroid positions and Difference from Reference
 		//Difference1 = CalculateMRCentroids(MR1Node, CTpolydata);
@@ -407,17 +597,31 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 
 
 	//Calculate Sequence Dependent Distortion
-
+	//vtkPolyData *SequenceDependent = ((Difference1y - Difference2y). / 2);
 
 	//Remove Sequence Dependent Distortion from Total Distortion
-
-
+		vtkSmartPointer<vtkDenseArray<double>>  GNLDist =
+			vtkSmartPointer<vtkDenseArray<double>>::New();
+		GNLDist->Resize(MR1polydata->GetNumberOfPoints());
+		GNLDist->Fill(1);
+		//GNLDisty = Differences1y - SequenceDependent;
+		//GNLDistx = Differences1x;
+		//GNLDistz = Differences1z;
 	//Interpolate Distortion Map
+		int order = 6;
+		//GNLDistortionNode = Distortion_polyfitSVD(MR1polydata, GNLDist, Extent, order);
+		Distortion_polyfitSVD(MR1polydata, GNLDist, Extent, order);
+		//GNLDistortionNodex = SVD_polyfit();
+		//GNLDistortionNodey = SVD_polyfit();
+		//GNLDistortionNodez = SVD_polyfit();
 
 
+		//Cleanup
+		exporter->Delete();
 	
-
-	return GNLDistortionNode;
+		MR1VolumeNode->SetAndObserveImageData(ThresholdImage);
+		GNLDistortionNode = vtkMRMLNode::SafeDownCast(MR1VolumeNode);
+		return GNLDistortionNode;
 }
 //-----------------------------------------------------------------------------
 vtkPolyData* vtkSlicerMeasureDistortionLogic::CalculateMRCentroids(vtkMRMLNode* MRNode, vtkPolyData*  CTpolydata){
@@ -428,3 +632,125 @@ vtkPolyData* vtkSlicerMeasureDistortionLogic::CalculateMRCentroids(vtkMRMLNode* 
 	return MRpolydata;
 }
 //------------------------------------------------------------------------------
+//vtkMRMLNode* vtkSlicerMeasureDistortionLogic::Distortion_polyfitSVD(vtkPolyData* MRpolydata,
+void vtkSlicerMeasureDistortionLogic::Distortion_polyfitSVD(vtkPolyData* MRpolydata,
+	vtkDenseArray<double>* GNLDist, int* Extent, int order){
+	vtkMRMLNode *GNLDistortionNode;
+
+	vnl_matrix<double> coeffs = Fit3DPolySVD(MRpolydata, GNLDist, order);
+	double* zbar = Eval3DPolySVD(Extent, coeffs, order);
+
+	//return GNLDistortionNode;
+}
+//-----------------------------------------------------------------------------
+vnl_matrix<double> vtkSlicerMeasureDistortionLogic::Fit3DPolySVD(vtkPolyData* MRpolydata,
+	vtkDenseArray<double>* GNLDist, int order){
+	
+	//if (MRpolydata->GetNumberOfPoints() != MRpolydata->GetNumberOfPoints());
+
+	//Scale
+//	vtkSmartPointer<vtkDenseArray<double>>  data =
+//		vtkSmartPointer<vtkDenseArray<double>>::New();
+//	data->Resize(MRpolydata->GetNumberOfPoints(),4);
+	vnl_matrix<double> data(MRpolydata->GetNumberOfPoints(), 3);
+	double bounds[6];
+	double maxabs[4] = { 0, 0, 0, 0 };
+//	MRpolydata->GetBounds(bounds);
+//	qDebug() << dim1start;
+//	qDebug() << dim1end;
+//	return bounds;
+	for (vtkIdType i = 0; i < MRpolydata->GetNumberOfPoints(); i++){
+		double p[3];	
+		MRpolydata->GetPoint(i, p);
+		data(i, 0) = p[0];
+		data(i, 1) = p[1];
+		data(i, 2) = p[2];
+		data(i, 3) = GNLDist->GetValue(i);
+		if (abs(data(i, 0))>maxabs[0]){ maxabs[0] = data(i, 0); }
+		if (abs(data(i, 1))>maxabs[1]){ maxabs[1] = data(i, 1); }
+		if (abs(data(i, 2))>maxabs[2]){ maxabs[2] = data(i, 2); }
+		if (abs(data(i, 3))>maxabs[3]){ maxabs[3] = data(i, 3); }
+	}
+	int numCoeffs = (order + 3)*(order + 2)*(order + 1) / 6;
+	vnl_matrix<double> A(MRpolydata->GetNumberOfPoints(), numCoeffs, 0);
+	vnl_vector<double> B(MRpolydata->GetNumberOfPoints());
+	vnl_vector<double> C(MRpolydata->GetNumberOfPoints());
+	vnl_vector<double> D(MRpolydata->GetNumberOfPoints());
+	int column = 0;
+	for (int xpower = 0; xpower < order; xpower++){
+		for (int ypower = 0; ypower < order - xpower; ypower++){
+			for (int zpower = 0; zpower < order - xpower - ypower; zpower++){
+				B = vnl_vectorpow(data.get_column(0).operator/= (maxabs[0]), xpower);
+				C = vnl_vectorpow(data.get_column(1).operator/= (maxabs[1]), ypower);
+				D = vnl_vectorpow(data.get_column(2).operator/= (maxabs[2]), zpower);
+				for (int k = 0; k < MRpolydata->GetNumberOfPoints(); k++){
+					A(k, column) = B(k)*C(k)*D(k);
+				}
+
+				column = column + 1;
+			}
+		}
+	}
+		
+	vnl_svd<double> svd(A);
+		double sigma = pow(std::numeric_limits<double>::epsilon(),1/order);
+		
+		vnl_matrix<double> W = svd.W();
+		vnl_matrix<double> q = W;
+		vnl_matrix<double> result;
+		vnl_matrix<double> coeffs;
+		vnl_matrix<double> comp(data.rows(),1);
+		unsigned int size; 
+		int sizec = W.columns();
+		int sizer = W.rows();
+		if (sizer >= sizec){
+			size = W.columns();
+		}
+		else{
+			size = W.rows();
+		}
+		for (int i = 0; i < size; i++){
+			if (abs(W(i, i)) >= sigma){
+				q(i, i) = 1 / W(i, i);
+			}
+			else{
+				q(i, i) = 0;
+			}
+		}		
+		comp.set_column(0, data.get_column(3).operator/= (maxabs[3]));
+		result = svd.V().operator*(q.transpose());
+		result = result.operator*(svd.U().transpose());
+		result = result.operator*(comp);
+
+		//rescale results
+		int i = 0;
+		for (int xpower = 0; xpower < order; xpower++){
+			for (int ypower = 0; ypower < order - xpower; ypower++){
+				for (int zpower = 0; zpower < order - xpower - ypower; zpower++){
+					result(i,0) = result(i,0)*(pow(1 / maxabs[0], xpower))*(pow(1 / maxabs[1], ypower))*(pow(1 / maxabs[2], zpower)) / (1 / maxabs[3]);
+
+
+					i = i + 1;
+				}
+			}
+		}
+
+		coeffs = result;
+		return coeffs;
+}
+//-----------------------------------------------------------------------------
+double* vtkSlicerMeasureDistortionLogic::Eval3DPolySVD(int* Extent, vnl_matrix<double> coeffs, int order){
+	double *zbar;
+
+
+	return zbar;
+}
+//-----------------------------------------------------------------------------
+vnl_vector<double> vtkSlicerMeasureDistortionLogic::vnl_vectorpow(vnl_vector<double> v,int p){
+	for (int i = 0; i < p-1; i++){
+		for (int j = 0; j < v.size(); j++){
+			v(j) = v(j)*v(j);
+		}
+	}
+	return v;
+}
