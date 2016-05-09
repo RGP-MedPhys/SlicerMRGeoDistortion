@@ -265,10 +265,10 @@ void qSlicerMeasureDistortionModuleWidget::CalculateDistortionClick()
 		qDebug("You must select 1 reference file");
 		return;
 	}
-	GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node,MR1Node);
+	GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node,MR2Node);
 	//GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node, MR2Node);
 	//	qDebug() << ReferenceNode;
-
+	qDebug() << "test";
 	//Display Distortion Map
 	vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
 	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
