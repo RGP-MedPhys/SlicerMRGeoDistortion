@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-project(SlicerMRinRT)
+project(MRGeoDistortion)
 
 #-----------------------------------------------------------------------------
 # Extension meta-information
-set(EXTENSION_HOMEPAGE "http://slicer.org/slicerWiki/index.php/Documentation/Nightly/Extensions/SlicerMRinRT")
+set(EXTENSION_HOMEPAGE "http://slicer.org/slicerWiki/index.php/Documentation/Nightly/Extensions/MRGeoDistortion")
 set(EXTENSION_CATEGORY "Examples")
 set(EXTENSION_CONTRIBUTORS "Ryan Glen Price (Henry Ford Health System)")
 set(EXTENSION_DESCRIPTION "This is an example of a simple extension")
 set(EXTENSION_ICONURL "http://www.example.com/Slicer/Extensions/SlicerMRinRT.png")
-set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/SlicerMRinRT/Screenshots/1.png")
+set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/MRGeoDistortion/Screenshots/1.png")
 
 #-----------------------------------------------------------------------------
 # Extension dependencies
