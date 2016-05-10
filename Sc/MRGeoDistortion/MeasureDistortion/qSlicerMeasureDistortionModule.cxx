@@ -94,7 +94,7 @@ QIcon qSlicerMeasureDistortionModule::icon() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerMeasureDistortionModule::categories() const
 {
-  return QStringList() << "MRinRT";
+  return QStringList() << "MRGeoDistortion";
 }
 
 //-----------------------------------------------------------------------------
