@@ -27,23 +27,49 @@
 // Slicer includes
 #include "vtkSlicerModuleLogic.h"
 
+#include "qSlicerAbstractModuleWidget.h"
+
+#include "vtkPolyData.h"
+#include <vtkDenseArray.h>
+#include <vnl/vnl_matrix.h>
+#include <vnl/vnl_vector.h>
+
 // MRML includes
+#include "vtkMRML.h"
+#include "vtkMRMLScene.h"
+#include "vtkMRMLVolumeNode.h"
 
 // STD includes
 #include <cstdlib>
+#include <list>
 
 #include "vtkSlicerMeasureDistortionModuleLogicExport.h"
 
+class vtkSlicerVolumesLogic;
 
-/// \ingroup Slicer_QtModules_ExtensionTemplate
+/// \ingroup Slicer_QtModules_MeasureDistortion
 class VTK_SLICER_MEASUREDISTORTION_MODULE_LOGIC_EXPORT vtkSlicerMeasureDistortionLogic :
   public vtkSlicerModuleLogic
 {
+
+
 public:
 
   static vtkSlicerMeasureDistortionLogic *New();
   vtkTypeMacro(vtkSlicerMeasureDistortionLogic, vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
+  void SetVolumesLogic(vtkSlicerVolumesLogic* logic);
+  vtkSlicerVolumesLogic* GetVolumesLogic();
+  vtkMRMLNode* CalculateReference(vtkMRMLNode*);
+ // vtkPolyData* CalculateReference(vtkMRMLNode*);
+  vtkMRMLNode* CalculateDistortion(vtkMRMLNode*, vtkMRMLNode*);
+  vtkPolyData* CalculateMRCentroids(vtkMRMLNode*, vtkPolyData* );
+  //vtkMRMLNode* Distortion_polyfitSVD(vtkPolyData*, vtkDenseArray<double>*, int*, int);
+  void Distortion_polyfitSVD(vtkPolyData*, vtkDoubleArray*, int*, int);
+  vnl_matrix<double> Fit3DPolySVD(vtkPolyData*, vtkDoubleArray*, int);
+  double* Eval3DPolySVD(int*, vnl_matrix<double>, int);
+  vnl_vector<double> vnl_vectorpow(vnl_vector<double>,int);
+  
 
 protected:
   vtkSlicerMeasureDistortionLogic();
@@ -56,9 +82,17 @@ protected:
   virtual void OnMRMLSceneNodeAdded(vtkMRMLNode* node);
   virtual void OnMRMLSceneNodeRemoved(vtkMRMLNode* node);
 private:
+	class vtkInternal;
+	vtkInternal* Internal;
 
-  vtkSlicerMeasureDistortionLogic(const vtkSlicerMeasureDistortionLogic&); // Not implemented
-  void operator=(const vtkSlicerMeasureDistortionLogic&); // Not implemented
+//public:
+	//void* pntrCTSelectionChanged = &CTSelectionChanged;
+	/// The currently active mrml volume node
+//	void SetActiveVolumeNode(vtkMRMLVolumeNode *ActiveVolumeNode);
+//	vtkMRMLVolumeNode* GetActiveVolumeNode()const;
+//	Q_INVOKABLE vtkMRMLNode* currentNode()const;
+	
+	
 };
 
 #endif

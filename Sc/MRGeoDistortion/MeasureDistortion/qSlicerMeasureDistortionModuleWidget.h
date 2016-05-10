@@ -18,13 +18,17 @@
 #ifndef __qSlicerMeasureDistortionModuleWidget_h
 #define __qSlicerMeasureDistortionModuleWidget_h
 
+#include "vtkPolyData.h"
+
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
 
 #include "qSlicerMeasureDistortionModuleExport.h"
+#include <vtkMRMLNode.h>
+#include <vtkMRMLScalarVolumeNode.h>
 
 class qSlicerMeasureDistortionModuleWidgetPrivate;
-class vtkMRMLNode;
+//class vtkMRMLNode;
 
 /// \ingroup Slicer_QtModules_ExtensionTemplate
 class Q_SLICER_QTMODULES_MEASUREDISTORTION_EXPORT qSlicerMeasureDistortionModuleWidget :
@@ -38,9 +42,20 @@ public:
   qSlicerMeasureDistortionModuleWidget(QWidget *parent=0);
   virtual ~qSlicerMeasureDistortionModuleWidget();
 
-public slots:
-bool loadDicomData();
+  vtkMRMLNode *CTNode;
+  vtkMRMLNode *MR1Node;
+  vtkMRMLNode *MR2Node;
+  vtkMRMLNode *ReferenceNode;
+  vtkMRMLNode *GNLDistortionNode;
 
+public slots:
+ void LoadReferenceClick();
+ //void LoadReferenceChanged();
+ void CalculateReferenceClick();
+ void CalculateDistortionClick();
+ void CTSelectionChanged(vtkMRMLNode*);
+ void MR1SelectionChanged(vtkMRMLNode*);
+ void MR2SelectionChanged(vtkMRMLNode*);
 
 protected:
   QScopedPointer<qSlicerMeasureDistortionModuleWidgetPrivate> d_ptr;

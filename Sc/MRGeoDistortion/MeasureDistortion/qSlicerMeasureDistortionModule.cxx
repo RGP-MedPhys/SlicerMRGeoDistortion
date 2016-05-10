@@ -15,11 +15,17 @@
 
 ==============================================================================*/
 
+// Slicer includes
+#include <qSlicerCoreApplication.h>
+#include <qSlicerModuleManager.h>
+
 // Qt includes
+#include <QDebug>
 #include <QtPlugin>
  
 // MeasureDistortion Logic includes
 #include <vtkSlicerMeasureDistortionLogic.h>
+#include <vtkSlicerVolumesLogic.h>
 
 // MeasureDistortion includes
 #include "qSlicerMeasureDistortionModule.h"
@@ -50,7 +56,7 @@ qSlicerMeasureDistortionModulePrivate::qSlicerMeasureDistortionModulePrivate()
 //-----------------------------------------------------------------------------
 qSlicerMeasureDistortionModule::qSlicerMeasureDistortionModule(QObject* _parent)
   : Superclass(_parent)
-  , d_ptr(new qSlicerMeasureDistortionModulePrivate)
+  , d_ptr(new qSlicerMeasureDistortionModulePrivate) 
 {
 }
 
@@ -88,7 +94,7 @@ QIcon qSlicerMeasureDistortionModule::icon() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerMeasureDistortionModule::categories() const
 {
-  return QStringList() << "MRinRT";
+  return QStringList() << "MRGeoDistortion";
 }
 
 //-----------------------------------------------------------------------------
@@ -100,7 +106,22 @@ QStringList qSlicerMeasureDistortionModule::dependencies() const
 //-----------------------------------------------------------------------------
 void qSlicerMeasureDistortionModule::setup()
 {
+	this->Superclass::setup();
 
+	vtkSlicerMeasureDistortionLogic* MeasureDistortionLogic =
+		vtkSlicerMeasureDistortionLogic::SafeDownCast(this->logic());
+	qSlicerAbstractCoreModule* volumesModule =
+		qSlicerCoreApplication::application()->moduleManager()->module("Volumes");
+	if (volumesModule)
+	{
+		vtkSlicerVolumesLogic* volumesLogic =
+			vtkSlicerVolumesLogic::SafeDownCast(volumesModule->logic());
+		MeasureDistortionLogic->SetVolumesLogic(volumesLogic);
+	}
+	else
+	{
+		qWarning() << "Volumes module is not found";
+	}
 }
 
 //-----------------------------------------------------------------------------
