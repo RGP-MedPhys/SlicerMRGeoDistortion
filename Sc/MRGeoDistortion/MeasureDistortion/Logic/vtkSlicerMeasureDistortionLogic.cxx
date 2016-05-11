@@ -55,6 +55,7 @@
 #include <vtkXMLPolyDataReader.h>
 #include <vtkKdTreePointLocator.h>
 #include <vtkImageMathematics.h>
+#include <vtkStructuredGrid.h>
 #include <vtkMath.h>
 #include <vtkDenseArray.h>
 #include <vtkImageMedian3D.h>
@@ -435,7 +436,7 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 		vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPolyData> Difference2 =
 		vtkSmartPointer<vtkPolyData>::New();
-	vtkMRMLNode *GNLDistortionNode =MR1Node;
+	
 	
 	
 
@@ -675,7 +676,7 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 		vtkIdType numPoints1; 
 		vtkIdType numPoints2;
 		double CTp[3];
-		//double MRp1[3];
+		double MRp1ijk[3];
 		//double MRp2[3];
 		double difp1[3];
 		double difp2[3];
@@ -692,6 +693,7 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 		j = 0;
 		int check1;
 		int check2;
+		
 
 		for (vtkIdType i = 0; i < CTpolydata->GetNumberOfPoints(); i++)
 		{
@@ -762,13 +764,13 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 						{
 							check1 =+ 1;
 							p1 = labelGeometryImageFilter1->GetCentroid(allLabels1[labelValue]);
-							pijk1[0] = p1[0] + start[0];
-							pijk1[1] = p1[1] + start[1];
-							pijk1[2] = p1[2] + start[2];
+							MRp1ijk[0] = p1[0] + start[0];
+							MRp1ijk[1] = p1[1] + start[1];
+							MRp1ijk[2] = p1[2] + start[2];
 
-							pijk1[0] = pijk1[0] * (DirCosinesRAS(0, 0) * PxlSpacingRAS[0]) + originRAS[0];
-							pijk1[1] = pijk1[1] * (DirCosinesRAS(1, 1) * PxlSpacingRAS[1]) + originRAS[1];
-							pijk1[2] = pijk1[2] * (DirCosinesRAS(2, 2) * PxlSpacingRAS[2]) + originRAS[2];
+							pijk1[0] = MRp1ijk[0] * (DirCosinesRAS(0, 0) * PxlSpacingRAS[0]) + originRAS[0];
+							pijk1[1] = MRp1ijk[1] * (DirCosinesRAS(1, 1) * PxlSpacingRAS[1]) + originRAS[1];
+							pijk1[2] = MRp1ijk[2] * (DirCosinesRAS(2, 2) * PxlSpacingRAS[2]) + originRAS[2];
 
 							difp1[0] = CTp[0] - pijk1[0];
 							difp1[1] = CTp[1] - pijk1[1];
@@ -828,7 +830,7 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 				else{ check2 = 0; }
 				if ((check2 == 1) && (check1 == 1))
 				{
-					MRpoints1->InsertNextPoint(pijk1);
+					MRpoints1->InsertNextPoint(MRp1ijk);
 					Differences1->InsertNextTupleValue(difp1);
 					Differences2->InsertNextTupleValue(difp2);
 					//difpoints1->InsertNextPoint(difp1);
@@ -924,9 +926,23 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 		//GNLDistz = Differences1z;
 	//Interpolate Distortion Map
 		int order = 6;
-		Distortion_polyfitSVD(MR1polydata, GNLDistx, Extent, order);
-		//GNLDistortionNode = Distortion_polyfitSVD(MR1polydata, GNLDisty, Extent, order);
-		//GNLDistortionNode = Distortion_polyfitSVD(MR1polydata, GNLDistz, Extent, order);
+		vtkImageData* DistortionImagex = Distortion_polyfitSVD(MR1polydata, GNLDistx, Extent, order);
+		vtkImageData* DistortionImagey = Distortion_polyfitSVD(MR1polydata, GNLDisty, Extent, order);
+		vtkImageData* DistortionImagez = Distortion_polyfitSVD(MR1polydata, GNLDistx, Extent, order);
+	
+		vtkMRMLScalarVolumeNode *DistortionVolumeNodex;
+		vtkMRMLScalarVolumeNode *DistortionVolumeNodey;
+		vtkMRMLScalarVolumeNode *DistortionVolumeNodez;
+		vtkMRMLNode *GNLDistortionNodex = MR1Node;
+		vtkMRMLNode *GNLDistortionNodey = MR1Node;
+		vtkMRMLNode *GNLDistortionNodez = MR1Node;
+		
+		DistortionVolumeNodex->SetAndObserveImageData(DistortionImagex);
+		DistortionVolumeNodey->SetAndObserveImageData(DistortionImagey);
+		DistortionVolumeNodez->SetAndObserveImageData(DistortionImagez);
+		GNLDistortionNodex = vtkMRMLNode::SafeDownCast(DistortionVolumeNodex);
+		GNLDistortionNodey = vtkMRMLNode::SafeDownCast(DistortionVolumeNodey);
+		GNLDistortionNodez = vtkMRMLNode::SafeDownCast(DistortionVolumeNodez);
 
 	//	qDebug() << "test";
 		//Output
@@ -939,13 +955,12 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 		writer->SetInputData(MR1polydata);
 		writer->Write();
 	
-		MR1VolumeNode->SetAndObserveImageData(TestImage);
-		GNLDistortionNode = vtkMRMLNode::SafeDownCast(MR1VolumeNode);
+		;
 		//Cleanup
 		exporter1->Delete();
 		exporter2->Delete();
 
-		return GNLDistortionNode;
+		return GNLDistortionNodex;
 }
 //-----------------------------------------------------------------------------
 vtkPolyData* vtkSlicerMeasureDistortionLogic::CalculateMRCentroids(vtkMRMLNode* MRNode, vtkPolyData*  CTpolydata){
@@ -956,18 +971,17 @@ vtkPolyData* vtkSlicerMeasureDistortionLogic::CalculateMRCentroids(vtkMRMLNode* 
 	return MRpolydata;
 }
 //------------------------------------------------------------------------------
-//vtkMRMLNode* vtkSlicerMeasureDistortionLogic::Distortion_polyfitSVD(vtkPolyData* MRpolydata,
-void vtkSlicerMeasureDistortionLogic::Distortion_polyfitSVD(vtkPolyData* MRpolydata,
+vtkImageData* vtkSlicerMeasureDistortionLogic::Distortion_polyfitSVD(vtkPolyData* MRpolydata,
 	vtkDoubleArray* GNLDist, int* Extent, int order){
-	vtkMRMLNode *GNLDistortionNode;
+	//vtkMRMLNode *GNLDistortionNode;
 
-	vnl_matrix<double> coeffs = Fit3DPolySVD(MRpolydata, GNLDist, order);
-	double* zbar = Eval3DPolySVD(Extent, coeffs, order);
+	vnl_vector<double> coeffs = Fit3DPolySVD(MRpolydata, GNLDist, order);
+	vtkImageData* DistortionImage = Eval3DPolySVD(Extent, coeffs, order);
 
-	//return GNLDistortionNode;
+	return DistortionImage;
 }
 //-----------------------------------------------------------------------------
-vnl_matrix<double> vtkSlicerMeasureDistortionLogic::Fit3DPolySVD(vtkPolyData* MRpolydata,
+vnl_vector<double> vtkSlicerMeasureDistortionLogic::Fit3DPolySVD(vtkPolyData* MRpolydata,
 	vtkDoubleArray* GNLDist, int order){
 	//if (MRpolydata->GetNumberOfPoints() != MRpolydata->GetNumberOfPoints());
 
@@ -1014,7 +1028,7 @@ vnl_matrix<double> vtkSlicerMeasureDistortionLogic::Fit3DPolySVD(vtkPolyData* MR
 			}
 		}
 	}
-	qDebug() << B.size()<<C.size()<< D.size()<< A.size();
+	//qDebug() << B.size()<<C.size()<< D.size()<< A.size();
 	
 	double sigma = pow(std::numeric_limits<double>::epsilon(),1/order);
 	vnl_svd<double> svd(A,sigma);
@@ -1025,7 +1039,7 @@ vnl_matrix<double> vtkSlicerMeasureDistortionLogic::Fit3DPolySVD(vtkPolyData* MR
 		vnl_matrix<double> q = W;
 		
 		vnl_matrix<double> result;
-		vnl_matrix<double> coeffs;
+		vnl_vector<double> coeffs;
 		vnl_matrix<double> comp(data.rows(),1);
 
 		unsigned int size; 
@@ -1052,28 +1066,77 @@ vnl_matrix<double> vtkSlicerMeasureDistortionLogic::Fit3DPolySVD(vtkPolyData* MR
 		result = result.operator*(svd.U().transpose());
 		result = result.operator*(comp);
 
+		coeffs = result.get_column(0);
+
+
+		qDebug() << coeffs.size();
+	
 		//rescale results
-		int i = 0;
+		int row = 0;
 		for (int xpower = 0; xpower < order; xpower++){
 			for (int ypower = 0; ypower < order - xpower; ypower++){
 				for (int zpower = 0; zpower < order - xpower - ypower; zpower++){
-					result(i,0) = result(i,0)*(pow(1 / maxabs[0], xpower))*(pow(1 / maxabs[1], ypower))*(pow(1 / maxabs[2], zpower)) / (1 / maxabs[3]);
-
-
-					i = i + 1;
+				
+					coeffs(row) = coeffs(row)*(pow(1 / maxabs[0], xpower))*(pow(1 / maxabs[1], ypower))*(pow(1 / maxabs[2], zpower)) / (1 / maxabs[3]);
+				
+					row = row + 1;
 				}
 			}
 		}
-		
-		coeffs = result;
+		qDebug() << "test";
+
 		return coeffs;
 }
 //-----------------------------------------------------------------------------
-double* vtkSlicerMeasureDistortionLogic::Eval3DPolySVD(int* Extent, vnl_matrix<double> coeffs, int order){
-	double *zbar;
+vtkImageData* vtkSlicerMeasureDistortionLogic::Eval3DPolySVD(int* Extent, vnl_vector<double> coeffs, int order){
+
 	
-	qDebug() << Extent[0] << Extent[1] << Extent[2] << Extent[3] << Extent[4] << Extent[5];
-	return zbar;
+	vtkSmartPointer<vtkImageData> DistortionImage =
+		vtkSmartPointer<vtkImageData>::New();
+	DistortionImage->SetExtent(Extent[0], Extent[1], Extent[2], Extent[3], Extent[4], Extent[5]);
+	DistortionImage->AllocateScalars(VTK_DOUBLE, 1);
+	DistortionImage->SetSpacing(1, 1, 1);
+	
+
+
+	qDebug() << "test";
+
+
+	int row = 0;
+	for (int xpower = 0; xpower < order; xpower++){
+		for (int ypower = 0; ypower < order - xpower; ypower++){
+			for (int zpower = 0; zpower < order - xpower - ypower; zpower++){
+				
+		
+				for (unsigned int k = Extent[4]; k <Extent[5]; k++){
+					
+					for (unsigned int j = Extent[2]; j < Extent[3]; j++){
+						
+						for (unsigned int i = Extent[0]; i < Extent[1]; i++){
+						
+							double* pixel = static_cast<double*>(DistortionImage->GetScalarPointer(i, j, k));
+							if ((k == Extent[4]) && (j == Extent[2]) && (i == Extent[0])){
+								pixel[0] = ((coeffs(row)*(i^xpower)*(j^ypower)*(k^zpower)));
+							}
+							else{
+								pixel[0] = (pixel[0] + (coeffs(row)*(i^xpower)*(j^ypower)*(k^zpower)));
+							}
+							
+
+				//			x += 1.0;
+						}
+				//		y += 1.0;
+					}
+			//		z += 1.0;
+				}
+				
+					
+				
+				row = row + 1;
+			}
+		}
+	}
+	return DistortionImage;
 }
 //-----------------------------------------------------------------------------
 vnl_vector<double> vtkSlicerMeasureDistortionLogic::vnl_vectorpow(vnl_vector<double> v,int p){
