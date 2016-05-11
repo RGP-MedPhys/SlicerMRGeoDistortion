@@ -64,10 +64,9 @@ public:
  // vtkPolyData* CalculateReference(vtkMRMLNode*);
   vtkMRMLNode* CalculateDistortion(vtkMRMLNode*, vtkMRMLNode*);
   vtkPolyData* CalculateMRCentroids(vtkMRMLNode*, vtkPolyData* );
-  //vtkMRMLNode* Distortion_polyfitSVD(vtkPolyData*, vtkDenseArray<double>*, int*, int);
-  void Distortion_polyfitSVD(vtkPolyData*, vtkDoubleArray*, int*, int);
-  vnl_matrix<double> Fit3DPolySVD(vtkPolyData*, vtkDoubleArray*, int);
-  double* Eval3DPolySVD(int*, vnl_matrix<double>, int);
+  vtkImageData* Distortion_polyfitSVD(vtkPolyData*, vtkDoubleArray*, int*, int);
+  vnl_vector<double> Fit3DPolySVD(vtkPolyData*, vtkDoubleArray*, int);
+  vtkImageData* Eval3DPolySVD(int*, vnl_vector<double>, int);
   vnl_vector<double> vnl_vectorpow(vnl_vector<double>,int);
   
 
