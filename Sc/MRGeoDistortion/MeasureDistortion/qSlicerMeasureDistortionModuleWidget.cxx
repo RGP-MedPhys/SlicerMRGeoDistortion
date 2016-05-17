@@ -271,9 +271,20 @@ void qSlicerMeasureDistortionModuleWidget::CalculateDistortionClick()
 	//	qDebug() << ReferenceNode;
 	//qDebug() << "test";
 	//Display Distortion Map
+	qDebug() << "test_final";
 	vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
 	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
 	selectionNode->SetReferenceActiveVolumeID(GNLDistortionNode->GetID());
 	appLogic->PropagateVolumeSelection();
 }
 //-------------------------------------------------------------
+//void qSlicerMeasureDistortionModuleWidget::AddMapstoScene(vtkMRMLNode *node)
+//{
+//	Q_D(qSlicerMeasureDistortionModuleWidget);
+//	this->mrmlScene->AddNode(node);
+//
+//	vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
+//	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
+//	selectionNode->SetReferenceActiveVolumeID(node->GetID());
+//	appLogic->PropagateVolumeSelection();
+//}

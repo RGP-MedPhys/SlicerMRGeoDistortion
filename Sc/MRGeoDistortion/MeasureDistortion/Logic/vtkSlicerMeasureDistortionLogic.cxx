@@ -32,6 +32,7 @@
 
 
 
+
 // VTK includes
 #include <vtkSmartPointer.h>
 #include <vtkFloatArray.h>
@@ -56,12 +57,16 @@
 #include <vtkKdTreePointLocator.h>
 #include <vtkImageMathematics.h>
 #include <vtkStructuredGrid.h>
+#include <vtkUnstructuredGrid.h>
 #include <vtkMath.h>
-#include <vtkDenseArray.h>
+#include<vtkDelaunay3D.h>
 #include <vtkImageMedian3D.h>
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_vector.h>
 #include <vnl/algo/vnl_svd.h>
+
+
+
 
 
 // ITK includes
@@ -157,20 +162,39 @@ void vtkSlicerMeasureDistortionLogic::RegisterNodes()
 }
 
 //---------------------------------------------------------------------------
+//void vtkSlicerMeasureDistortionLogic::ProcessMRMLNodesEvents(vtkObject *vtkNotUsed(caller), 
+//	unsigned long event, void *callData)
+//{
+//	vtkDebugMacro("ProcessMRMLNodesEvents");
+//
+//	vtkMRMLNode* node = reinterpret_cast<vtkMRMLNode*> (callData);
+//	vtkMRMLAnnotationNode* annotationNode = vtkMRMLAnnotationNode::SafeDownCast(node);
+//	if (annotationNode)
+//	{
+//		switch (event)
+//		{
+//		case vtkMRMLScene::NodeAddedEvent:
+//			this->OnMRMLSceneNodeAdded(annotationNode);
+//			break;
+//		case vtkMRMLScene::NodeRemovedEvent:
+//			this->OnMRMLSceneNodeRemoved(annotationNode);
+//			break;
+//		}
+//
+//---------------------------------------------------------------------------
 void vtkSlicerMeasureDistortionLogic::UpdateFromMRMLScene()
 {
   assert(this->GetMRMLScene() != 0);
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerMeasureDistortionLogic
-::OnMRMLSceneNodeAdded(vtkMRMLNode* vtkNotUsed(node))
+void vtkSlicerMeasureDistortionLogic::OnMRMLSceneNodeAdded(vtkMRMLNode* node)
 {
+	
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerMeasureDistortionLogic
-::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
+void vtkSlicerMeasureDistortionLogic::OnMRMLSceneNodeRemoved(vtkMRMLNode* vtkNotUsed(node))
 {
 }
 //--------------------------------------------------------------------------
@@ -428,6 +452,7 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateReference(vtkMRMLNode* CT
 //------------------------------------------------------------------------------
 vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* MR1Node, vtkMRMLNode* MR2Node){
 	
+
 	vtkSmartPointer<vtkXMLPolyDataReader> reader =
 		vtkSmartPointer<vtkXMLPolyDataReader>::New();
 	vtkSmartPointer<vtkPolyData> CTpolydata =
@@ -459,6 +484,8 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 		//vtkSmartPointer<vtkImageData> ThresholdImage2 =
 		//	vtkSmartPointer<vtkImageData>::New();
 		//ThresholdImage2 = MR2Image;
+
+
 
 
 	//Find MR Center Control Points (closest CP to isocenter)
@@ -500,6 +527,23 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 		vtkSmartPointer<vtkImageData> ThresholdImage2 =
 			vtkSmartPointer<vtkImageData>::New();
 		ThresholdImage2->DeepCopy(MRThreshold->GetOutput());
+
+		int t = 0;
+
+		if (t == 1){
+		
+			vtkMRMLScalarVolumeNode *DistortionVolumeNodex = MR1VolumeNode;
+			vtkMRMLNode *GNLDistortionNodex;
+
+			DistortionVolumeNodex->SetAndObserveImageData(ThresholdImage1);
+		
+			GNLDistortionNodex = vtkMRMLNode::SafeDownCast(DistortionVolumeNodex);
+
+		
+
+
+			return GNLDistortionNodex;
+		}
 
 
 		//Establish pipeline connection between VTK and ITK
@@ -884,22 +928,13 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 		GNLDistz->SetNumberOfComponents(1);
 		double sequencedependentp[3];
 		double GNLp[3];
-		
-		//vtkSmartPointer<vtkPoints> seqdependentpoints =
-		//	vtkSmartPointer<vtkPoints>::New();
-		//vtkSmartPointer<vtkPoints> GNLpoints =
-		//	vtkSmartPointer<vtkPoints>::New();
-	//	qDebug() << j;
+	
 		for (vtkIdType i = 0; i < j; i++)
 		{
-			//double p[3];
-			//Difference1->GetPoint(i, difp1);
-			//Difference2->GetPoint(i, difp2);
 			Differences1->GetTupleValue(i, difp1);
 			Differences2->GetTupleValue(i, difp2);
 			sequencedependentp[0] = 0;
 			sequencedependentp[1] = ((difp1[1] - difp2[1]) / 2);
-			//qDebug() << sequencedependentp[1];
 			sequencedependentp[2] = 0;
 			GNLp[0] = (difp1[0]);
 			GNLp[1] = (difp1[1] - sequencedependentp[1]);
@@ -907,44 +942,32 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 			GNLDistx->InsertComponent(i, 0, GNLp[0]);
 			GNLDisty->InsertComponent(i, 0, GNLp[1]);
 			GNLDistz->InsertComponent(i, 0, GNLp[2]);
-			//GNLdisty[i] = GNLp[1];
-			//GNLdistz[i] = GNLp[2];
 			GNLDist->InsertNextTupleValue(GNLp);
 			SequenceDependent->InsertNextTupleValue(sequencedependentp);
-			//seqdependentpoints->InsertNextPoint(sequencedependentp);
-			//GNLpoints->InsertNextPoint(GNLp);
-			//qDebug() << GNLdisty[i];
 		}
 		
-		//GNLDist->SetPoints(GNLpoints);
-		//SequenceDependent->SetPoints(seqdependentpoints);
-		//GNLDist->Resize(MR1polydata->GetNumberOfPoints());
-		//GNLDist->Fill(1);
-
-		//GNLDisty = Differences1y - SequenceDependent;
-		//GNLDistx = Differences1x;
-		//GNLDistz = Differences1z;
 	//Interpolate Distortion Map
 		int order = 6;
-		vtkImageData* DistortionImagex = Distortion_polyfitSVD(MR1polydata, GNLDistx, Extent, order);
-		vtkImageData* DistortionImagey = Distortion_polyfitSVD(MR1polydata, GNLDisty, Extent, order);
-		vtkImageData* DistortionImagez = Distortion_polyfitSVD(MR1polydata, GNLDistx, Extent, order);
+		vtkSmartPointer<vtkImageData> DistortionImagex = Distortion_polyfitSVD(MR1polydata, GNLDistx, Extent, order);
+		vtkSmartPointer<vtkImageData> DistortionImagey = Distortion_polyfitSVD(MR1polydata, GNLDisty, Extent, order);
+		vtkSmartPointer<vtkImageData> DistortionImagez = Distortion_polyfitSVD(MR1polydata, GNLDistz, Extent, order);
 	
-		vtkMRMLScalarVolumeNode *DistortionVolumeNodex;
-		vtkMRMLScalarVolumeNode *DistortionVolumeNodey;
-		vtkMRMLScalarVolumeNode *DistortionVolumeNodez;
-		vtkMRMLNode *GNLDistortionNodex = MR1Node;
-		vtkMRMLNode *GNLDistortionNodey = MR1Node;
-		vtkMRMLNode *GNLDistortionNodez = MR1Node;
-		
+		vtkMRMLScalarVolumeNode *DistortionVolumeNodex = MR1VolumeNode;
+		vtkMRMLScalarVolumeNode *DistortionVolumeNodey = MR1VolumeNode;
+		vtkMRMLScalarVolumeNode *DistortionVolumeNodez = MR1VolumeNode;
+
+		vtkMRMLNode *GNLDistortionNodex;
+		vtkMRMLNode *GNLDistortionNodey;
+		vtkMRMLNode *GNLDistortionNodez;
+	
 		DistortionVolumeNodex->SetAndObserveImageData(DistortionImagex);
 		DistortionVolumeNodey->SetAndObserveImageData(DistortionImagey);
 		DistortionVolumeNodez->SetAndObserveImageData(DistortionImagez);
+		
 		GNLDistortionNodex = vtkMRMLNode::SafeDownCast(DistortionVolumeNodex);
 		GNLDistortionNodey = vtkMRMLNode::SafeDownCast(DistortionVolumeNodey);
 		GNLDistortionNodez = vtkMRMLNode::SafeDownCast(DistortionVolumeNodez);
-
-	//	qDebug() << "test";
+		
 		//Output
 		vtkSmartPointer<vtkXMLPolyDataWriter> writer =
 			vtkSmartPointer<vtkXMLPolyDataWriter>::New();
@@ -954,188 +977,393 @@ vtkMRMLNode* vtkSlicerMeasureDistortionLogic::CalculateDistortion(vtkMRMLNode* M
 		writer->SetFileName("MRposition.vtp");
 		writer->SetInputData(MR1polydata);
 		writer->Write();
+		CalculateStats(GNLDistortionNodex, 0);
+		CalculateStats(GNLDistortionNodey, 1);
+		CalculateStats(GNLDistortionNodez, 2);
 	
-		;
 		//Cleanup
 		exporter1->Delete();
 		exporter2->Delete();
 
+		/*qSlicerMeasureDistortionModuleWidget *widget;
+		AddMapstoScene(GNLDistortionNodex);*/
+		//GNLDistortionNodex->AddToSceneOn();
 		return GNLDistortionNodex;
 }
 //-----------------------------------------------------------------------------
-vtkPolyData* vtkSlicerMeasureDistortionLogic::CalculateMRCentroids(vtkMRMLNode* MRNode, vtkPolyData*  CTpolydata){
-	vtkSmartPointer<vtkPolyData> MRpolydata =
-		vtkSmartPointer<vtkPolyData>::New();
+ void vtkSlicerMeasureDistortionLogic::CalculateStats(vtkMRMLNode* MRNode, int dim){
+	 
+	 vtkMRMLScalarVolumeNode *DistVolumeNode;
+	 vtkImageData *DistImage;
+	 DistVolumeNode = vtkMRMLScalarVolumeNode::SafeDownCast(MRNode);
+	 DistImage = DistVolumeNode->GetImageData();
+
+	 double* PxlSpacing = DistVolumeNode->GetSpacing();
+	 int* Extent = DistImage->GetExtent();
+	 double *Origin = DistVolumeNode->GetOrigin();
+	 double radius;
+
+	 double largest =0;
+	 double largestloc = 0;
+
+	 double closest1 = 3000; double closest2 = 3000; double closest3 = 3000;
+	 double closest4 = 3000; double closest5 = 3000; double closest6 = 3000;
+	 double closest7 = 3000;
+
+	 double Num1 = 0; double Num2 = 0; double Num3 = 0;
+	 double Num4 = 0; double Num5 = 0; double Num6 = 0;
+	 double Num7 =0; double Num0 = 0;
+
+	
+	 char* name;
+	 if (dim == 0){
+		 name = "DistortionVsRadius_x.txt";
+	 }
+	 if (dim == 1){
+		 name = "DistortionVsRadius_y.txt";
+	 }
+	 if (dim == 2){
+		 name = "DistortionVsRadius_z.txt";
+	 }
+	 else {
+		 qCritical() << "dimension must be of value 0, 1, or 2";
+		 return;
+	 }
+	 ofstream dvsrfile(name);
+	
+	 for (int k = Extent[4]; k < Extent[5]; k++){
+		 for (int j = Extent[2]; j < Extent[3]; j++){
+			 for (int i = Extent[0]; i < Extent[1]; i++){
+				 double* pixel = static_cast<double*>(DistImage->GetScalarPointer(i, j, k));
+				 radius = sqrt(pow(PxlSpacing[0] * abs(Origin[0] - i), 2) + 
+					 pow(PxlSpacing[1] * abs(Origin[1] - j), 2) + 
+					 pow(PxlSpacing[2] * abs(Origin[2] - k), 2));
+				 
+				 if (pixel[0] > largest){ largest = pixel[0]; largestloc = radius; }
+
+				 
+				 if (pixel[0] > 0){
+					 Num0++;
+				 }
+				 
+				 if (pixel[0] >= 1){
+					 if (radius < closest1){ 
+						 closest1 = radius; 
+					 }
+					 Num1++; 
+				 }
+
+				 if (pixel[0] >= 2){
+					 if (radius < closest2){
+						 closest2 = radius;
+					 }
+					 Num2++;
+				 }
+
+				 if (pixel[0] >= 3){
+					 if (radius < closest3){
+						 closest3 = radius;
+					 }
+					 Num3++;
+				 }
+
+				 if (pixel[0] >= 4){
+					 if (radius < closest4){
+						 closest4 = radius;
+					 }
+					 Num4++;
+				 }
+
+				 if (pixel[0] >= 5){
+					 if (radius < closest5){
+						 closest5 = radius;
+					 }
+					 Num5++;
+				 }
+
+				 if (pixel[0] >= 6){
+					 if (radius < closest6){
+						 closest6 = radius;
+					 }
+					 Num6++;
+				 }
+
+				 if (pixel[0] >= 7){
+					 if (radius < closest7){
+						 closest7 = radius;
+					 }
+					 Num7++;
+				 }
+
+			 }
+		 }
+	 }
+	 dvsrfile.close();
+
+	 ofstream statsfile("DistortionStats.txt");
+	 if (statsfile.is_open())
+	 {
+		 if (dim == 0){
+			 statsfile << "Left to Right Distortion\n";
+		 }
+		 if (dim == 1){
+			 statsfile << "Anterior to Posterior Distortion\n";
+		 }
+		 if (dim == 2){
+			 statsfile << "Superior to Inferior Distortion\n";
+		 }
+		 statsfile << "Largest Distortion:\t";
+		 statsfile << largest << "\n";
+
+		 statsfile << "Pct of voxels with distortion over 1mm:\t";
+		 statsfile << Num1 / Num0 << "\n";
+		 statsfile << "Pct of voxels with distortion over 2mm:\t";
+		 statsfile << Num2 / Num0 << "\n";
+		 statsfile << "Pct of voxels with distortion over 3mm:\t";
+		 statsfile << Num3 / Num0 << "\n";
+		 statsfile << "Pct of voxels with distortion over 4mm:\t";
+		 statsfile << Num4 / Num0 << "\n";
+		 statsfile << "Pct of voxels with distortion over 5mm:\t";
+		 statsfile << Num5 / Num0 << "\n";
+		 statsfile << "Pct of voxels with distortion over 6mm:\t";
+		 statsfile << Num6 / Num0 << "\n";
+		 statsfile << "Pct of voxels with distortion over 7mm:\t";
+		 statsfile << Num7 / Num0 << "\n";
+		
+		 statsfile << "Closest 1mm Distortion:\t";
+		 statsfile << closest1 << "\n";
+		 statsfile << "Closest 2mm Distortion:\t";
+		 statsfile << closest2 << "\n";
+		 statsfile << "Closest 3mm Distortion:\t";
+		 statsfile << closest3 << "\n";
+		 statsfile << "Closest 4mm Distortion:\t";
+		 statsfile << closest4 << "\n";
+		 statsfile << "Closest 5mm Distortion:\t";
+		 statsfile << closest5 << "\n";
+		 statsfile << "Closest 6mm Distortion:\t";
+		 statsfile << closest6 << "\n";
+		 statsfile << "Closest 7mm Distortion:\t";
+		 statsfile << closest1 << "\n\n";
+		 
+		 
+		 statsfile.close();
+	 }
 
 
-	return MRpolydata;
+//	return MRpolydata;
 }
 //------------------------------------------------------------------------------
-vtkImageData* vtkSlicerMeasureDistortionLogic::Distortion_polyfitSVD(vtkPolyData* MRpolydata,
+vtkSmartPointer<vtkImageData> vtkSlicerMeasureDistortionLogic::Distortion_polyfitSVD(vtkPolyData* MRpolydata,
 	vtkDoubleArray* GNLDist, int* Extent, int order){
 	//vtkMRMLNode *GNLDistortionNode;
+	vnl_vector<double> coeffs((order + 3)*(order + 2)*(order + 1) / 6);
+//	vtkImageData* DistortionImage;
+	qDebug() << coeffs.size();
+	coeffs = Fit3DPolySVD(MRpolydata, GNLDist, order);
+	qDebug() << "test_in";
+	vtkSmartPointer<vtkImageData> DistortionImage = Eval3DPolySVD(Extent, MRpolydata, coeffs, order);
 
-	vnl_vector<double> coeffs = Fit3DPolySVD(MRpolydata, GNLDist, order);
-	vtkImageData* DistortionImage = Eval3DPolySVD(Extent, coeffs, order);
-
+	qDebug() << "test_out";
+	//double pixelf = DistortionImage->GetScalarComponentAsDouble(30, 30, 30, 0);
 	return DistortionImage;
+
 }
 //-----------------------------------------------------------------------------
 vnl_vector<double> vtkSlicerMeasureDistortionLogic::Fit3DPolySVD(vtkPolyData* MRpolydata,
 	vtkDoubleArray* GNLDist, int order){
 	//if (MRpolydata->GetNumberOfPoints() != MRpolydata->GetNumberOfPoints());
+	qDebug() << "test";
+	unsigned numCoeffs = (order + 3)*(order + 2)*(order + 1) / 6;
+	unsigned numPts = MRpolydata->GetNumberOfPoints();
 
 	//Scale
 //	vtkSmartPointer<vtkDenseArray<double>>  data =
 //		vtkSmartPointer<vtkDenseArray<double>>::New();
 //	data->Resize(MRpolydata->GetNumberOfPoints(),4);
-	vnl_matrix<double> data(MRpolydata->GetNumberOfPoints(), 3);
+	vnl_matrix<double> data(numPts, 4);
 	double bounds[6];
 	double maxabs[4] = { 0, 0, 0, 0 };
 //	MRpolydata->GetBounds(bounds);
 //	qDebug() << dim1start;
 //	qDebug() << dim1end;
 //	return bounds;
-	for (vtkIdType i = 0; i < MRpolydata->GetNumberOfPoints(); i++){
+	for (vtkIdType i = 0; i < numPts; i++){
 		double p[3];	
 		MRpolydata->GetPoint(i, p);
-		data(i, 0) = p[0];
-		data(i, 1) = p[1];
-		data(i, 2) = p[2];
-		data(i, 3) = GNLDist->GetComponent(i,0);
-		if (abs(data(i, 0))>maxabs[0]){ maxabs[0] = data(i, 0); }
-		if (abs(data(i, 1))>maxabs[1]){ maxabs[1] = data(i, 1); }
-		if (abs(data(i, 2))>maxabs[2]){ maxabs[2] = data(i, 2); }
-		if (abs(data(i, 3))>maxabs[3]){ maxabs[3] = data(i, 3); }
+		data.put(i, 0, p[0]);
+		data.put(i, 1, p[1]);
+		data.put(i, 2, p[2]);
+		data.put(i, 3, GNLDist->GetComponent(i, 0));
+
+		//qDebug() << GNLDist->GetComponent(i, 0);
+
+		if (abs(data.get(i, 0))>maxabs[0]){ maxabs[0] = data.get(i, 0); }
+		if (abs(data.get(i, 1))>maxabs[1]){ maxabs[1] = data.get(i, 1); }
+		if (abs(data.get(i, 2))>maxabs[2]){ maxabs[2] = data.get(i, 2); }
+		if (abs(data.get(i, 3))>maxabs[3]){ maxabs[3] = data.get(i, 3); }
+		//qDebug() << "test";
 	}
-	int numCoeffs = (order + 3)*(order + 2)*(order + 1) / 6;
-	vnl_matrix<double> A(MRpolydata->GetNumberOfPoints(), numCoeffs, 0);
-	vnl_vector<double> B(MRpolydata->GetNumberOfPoints());
-	vnl_vector<double> C(MRpolydata->GetNumberOfPoints());
-	vnl_vector<double> D(MRpolydata->GetNumberOfPoints());
-	
+	//qDebug() << numPts << numCoeffs;
+	vnl_matrix<double> A(numPts, numCoeffs,0.0);
+	//qDebug() << A.rows() << A.columns();
+	vnl_vector<double> B(numPts);
+	vnl_vector<double> C(numPts);
+	vnl_vector<double> D(numPts);
 	int column = 0;
-	for (int xpower = 0; xpower < order; xpower++){
-		for (int ypower = 0; ypower < order - xpower; ypower++){
-			for (int zpower = 0; zpower < order - xpower - ypower; zpower++){
+	for (int xpower = 0; xpower < order + 1; xpower++){
+		for (int ypower = 0; ypower < order - xpower + 1; ypower++){
+			for (int zpower = 0; zpower < order - xpower - ypower + 1; zpower++){
 				B = vnl_vectorpow(data.get_column(0).operator/= (maxabs[0]), xpower);
 				C = vnl_vectorpow(data.get_column(1).operator/= (maxabs[1]), ypower);
 				D = vnl_vectorpow(data.get_column(2).operator/= (maxabs[2]), zpower);
-				for (int k = 0; k < MRpolydata->GetNumberOfPoints(); k++){
-					A(k, column) = B(k)*C(k)*D(k);
+				for (int k = 0; k < numPts; k++){
+					A.put(k, column, B.get(k)*C.get(k)*D.get(k));
 				}
 				column = column + 1;
 			}
 		}
 	}
 	//qDebug() << B.size()<<C.size()<< D.size()<< A.size();
-	
 	double sigma = pow(std::numeric_limits<double>::epsilon(),1/order);
 	vnl_svd<double> svd(A,sigma);
+	vnl_matrix<double> W = svd.W();
+	vnl_matrix<double> q = W;	
+	vnl_matrix<double> result;
+	vnl_vector<double> coeffs(numCoeffs);
+	vnl_matrix<double> comp(data.rows(),1);
 
+	unsigned int size; 
+	int sizec = W.columns();
+	int sizer = W.rows();
 
-		vnl_matrix<double> W = svd.W();
-	
-		vnl_matrix<double> q = W;
-		
-		vnl_matrix<double> result;
-		vnl_vector<double> coeffs;
-		vnl_matrix<double> comp(data.rows(),1);
+	if (sizer >= sizec){
+		size = W.columns();
+	}
+	else{
+		size = W.rows();
+	}
 
-		unsigned int size; 
-		int sizec = W.columns();
-		int sizer = W.rows();
-
-		if (sizer >= sizec){
-			size = W.columns();
+	for (int i = 0; i < size; i++){
+		if (abs(W.get(i, i)) >= sigma){
+			q.put(i, i, 1 / W.get(i, i));
 		}
 		else{
-			size = W.rows();
+			q.put(i, i, 0);
 		}
+	}		
+	comp.set_column(0, data.get_column(3).operator/= (maxabs[3]));
+	result = svd.V().operator*(q.transpose());
+	result = result.operator*(svd.U().transpose());
+	result = result.operator*(comp);
 
-		for (int i = 0; i < size; i++){
-			if (abs(W(i, i)) >= sigma){
-				q(i, i) = 1 / W(i, i);
-			}
-			else{
-				q(i, i) = 0;
-			}
-		}		
-		comp.set_column(0, data.get_column(3).operator/= (maxabs[3]));
-		result = svd.V().operator*(q.transpose());
-		result = result.operator*(svd.U().transpose());
-		result = result.operator*(comp);
+	coeffs = result.get_column(0);
 
-		coeffs = result.get_column(0);
+	//coeffs = result.get_column(0);
 
-
-		qDebug() << coeffs.size();
-	
-		//rescale results
-		int row = 0;
-		for (int xpower = 0; xpower < order; xpower++){
-			for (int ypower = 0; ypower < order - xpower; ypower++){
-				for (int zpower = 0; zpower < order - xpower - ypower; zpower++){
-				
-					coeffs(row) = coeffs(row)*(pow(1 / maxabs[0], xpower))*(pow(1 / maxabs[1], ypower))*(pow(1 / maxabs[2], zpower)) / (1 / maxabs[3]);
-				
-					row = row + 1;
-				}
-			}
-		}
-		qDebug() << "test";
-
-		return coeffs;
-}
-//-----------------------------------------------------------------------------
-vtkImageData* vtkSlicerMeasureDistortionLogic::Eval3DPolySVD(int* Extent, vnl_vector<double> coeffs, int order){
 
 	
-	vtkSmartPointer<vtkImageData> DistortionImage =
-		vtkSmartPointer<vtkImageData>::New();
-	DistortionImage->SetExtent(Extent[0], Extent[1], Extent[2], Extent[3], Extent[4], Extent[5]);
-	DistortionImage->AllocateScalars(VTK_DOUBLE, 1);
-	DistortionImage->SetSpacing(1, 1, 1);
-	
-
-
-	qDebug() << "test";
-
-
+	//rescale results
 	int row = 0;
-	for (int xpower = 0; xpower < order; xpower++){
-		for (int ypower = 0; ypower < order - xpower; ypower++){
-			for (int zpower = 0; zpower < order - xpower - ypower; zpower++){
+	for (int xpower = 0; xpower < order + 1; xpower++){
+		for (int ypower = 0; ypower < order - xpower + 1; ypower++){
+			for (int zpower = 0; zpower < order - xpower - ypower + 1; zpower++){
 				
-		
-				for (unsigned int k = Extent[4]; k <Extent[5]; k++){
-					
-					for (unsigned int j = Extent[2]; j < Extent[3]; j++){
-						
-						for (unsigned int i = Extent[0]; i < Extent[1]; i++){
-						
-							double* pixel = static_cast<double*>(DistortionImage->GetScalarPointer(i, j, k));
-							if ((k == Extent[4]) && (j == Extent[2]) && (i == Extent[0])){
-								pixel[0] = ((coeffs(row)*(i^xpower)*(j^ypower)*(k^zpower)));
-							}
-							else{
-								pixel[0] = (pixel[0] + (coeffs(row)*(i^xpower)*(j^ypower)*(k^zpower)));
-							}
-							
-
-				//			x += 1.0;
-						}
-				//		y += 1.0;
-					}
-			//		z += 1.0;
-				}
-				
-					
-				
+				coeffs.put(row, coeffs.get(row)*(pow(1 / maxabs[0], xpower))*(pow(1 / maxabs[1], ypower))*(pow(1 / maxabs[2], zpower)) / (1 / maxabs[3]));
+				//qDebug() << row << coeffs(row);
 				row = row + 1;
 			}
 		}
 	}
+		qDebug() << "test";;
+		return coeffs;
+}
+//-----------------------------------------------------------------------------
+vtkSmartPointer<vtkImageData> vtkSlicerMeasureDistortionLogic::Eval3DPolySVD(int* Extent, vtkPolyData* MRpolydata, vnl_vector<double> coeffs, int order){
+
+	
+	vtkSmartPointer<vtkImageData> DistortionImage =
+		vtkSmartPointer<vtkImageData>::New();
+//	vtkSmartPointer<vtkDoubleArray>DistortionImage =
+//		vtkSmartPointer<vtkDoubleArray>::New();
+//	DistortionImage->SetNumberOfComponents(1);
+//	DistortionImage->FillComponent(0, 0);
+//	vtkImageData *DistortionImage;
+//	DistortionImage->SetDimensions(Extent[1] - Extent[0], Extent[3] - Extent[2], Extent[5] - Extent[4]);
+	DistortionImage->SetExtent(Extent[0], Extent[1], Extent[2], Extent[3], Extent[4], Extent[5]);
+	//DistortionImage->SetDimensions(512, 512, 1);
+	DistortionImage->SetOrigin(0.0, 0.0, 0.0);
+	DistortionImage->SetSpacing(1.0, 1.0, 1.0);
+	DistortionImage->AllocateScalars(VTK_DOUBLE, 1);
+	
+
+	
+	
+	qDebug() << "test";
+	vtkSmartPointer<vtkDelaunay3D> delaunay3D = 
+		vtkSmartPointer<vtkDelaunay3D>::New();
+	delaunay3D->SetInputData(MRpolydata);
+	delaunay3D->Update();
+
+	double point[3];
+//	double pixelf;
+	//double pixel0;
+//	double pixel;
+	//double* pixel = static_cast<double*>(DistortionImage->GetScalarPointer());
+	int row = 0;	
+	for (int xpower = 0; xpower < order + 1; xpower++){
+		for (int ypower = 0; ypower < order - xpower + 1; ypower++){
+			for (int zpower = 0; zpower < order - xpower - ypower + 1; zpower++){
+				
+		
+				for (unsigned int k = Extent[4]; k < Extent[5]; k++){
+					
+					for (unsigned int j = Extent[2]; j < Extent[3]; j++){
+						
+						for (unsigned int i = Extent[0]; i < Extent[1]; i++){
+							
+							double* pixel = static_cast<double*>(DistortionImage->GetScalarPointer(i, j, k));
+							
+								if ((row == 0)){
+									point[0] = i; point[1] = j; point[2] = k;
+									double pcoords[3];
+									double weights[4];
+
+									int subId;
+									vtkIdType cellId = delaunay3D->GetOutput()->FindCell(point, NULL, 0, .1, subId, pcoords, weights);
+									if (cellId >= 0)
+									{
+
+										pixel[0] = ((coeffs[row] * (pow(i, xpower))*(pow(j, ypower))*(pow(k, zpower))));
+							
+									}
+									else{
+										pixel[0] = 0.0;
+									}
+								}
+								else{
+									if (pixel[0]!=0){
+										//	pixel0 = DistortionImage->GetScalarComponentAsDouble(i, j, k, 0);
+										//pixel = (pixel0 + (coeffs.get(row)*(pow(i, xpower))*(pow(j, ypower))*(pow(k, zpower))));
+										pixel[0] = (pixel[0] + (coeffs[row] * (pow(i, xpower))*(pow(j, ypower))*(pow(k, zpower))));
+										//	DistortionImage->SetScalarComponentFromDouble(i, j, k, 0, pixel);
+									}
+									else{
+										pixel[0] = 0.0;
+									}
+								}
+								
+							}
+				
+						}
+					}
+				row = row + 1;
+				}
+			}
+		}
+	
+
+
+	qDebug() << "test";
 	return DistortionImage;
 }
 //-----------------------------------------------------------------------------
@@ -1147,3 +1375,4 @@ vnl_vector<double> vtkSlicerMeasureDistortionLogic::vnl_vectorpow(vnl_vector<dou
 	}
 	return v;
 }
+//---------------------------------------------

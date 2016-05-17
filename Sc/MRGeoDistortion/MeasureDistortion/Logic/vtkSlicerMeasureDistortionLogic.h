@@ -63,11 +63,25 @@ public:
   vtkMRMLNode* CalculateReference(vtkMRMLNode*);
  // vtkPolyData* CalculateReference(vtkMRMLNode*);
   vtkMRMLNode* CalculateDistortion(vtkMRMLNode*, vtkMRMLNode*);
-  vtkPolyData* CalculateMRCentroids(vtkMRMLNode*, vtkPolyData* );
-  vtkImageData* Distortion_polyfitSVD(vtkPolyData*, vtkDoubleArray*, int*, int);
+  void CalculateStats(vtkMRMLNode* MRNode, int dim);
+  vtkSmartPointer<vtkImageData> Distortion_polyfitSVD(vtkPolyData*, vtkDoubleArray*, int*, int);
   vnl_vector<double> Fit3DPolySVD(vtkPolyData*, vtkDoubleArray*, int);
-  vtkImageData* Eval3DPolySVD(int*, vnl_vector<double>, int);
+  vtkSmartPointer<vtkImageData> Eval3DPolySVD(int*, vtkPolyData*, vnl_vector<double>, int);
   vnl_vector<double> vnl_vectorpow(vnl_vector<double>,int);
+
+  /*struct stats{
+	  double closest1mm;
+	  double closest2mm;
+	  double closest3mm;
+	  double closest4mm;
+	  double closest5mm;
+	  double closest6mm;
+	  double closest7mm;
+	  double largestdist;
+	  double largestdistradius;
+  } Distortionx, Distortionz, Distortiony;*/
+
+
   
 
 protected:

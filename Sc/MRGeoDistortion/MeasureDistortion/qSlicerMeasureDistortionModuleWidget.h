@@ -42,6 +42,8 @@ public:
   qSlicerMeasureDistortionModuleWidget(QWidget *parent=0);
   virtual ~qSlicerMeasureDistortionModuleWidget();
 
+  //void AddMapstoScene(vtkMRMLNode *node);
+
   vtkMRMLNode *CTNode;
   vtkMRMLNode *MR1Node;
   vtkMRMLNode *MR2Node;
