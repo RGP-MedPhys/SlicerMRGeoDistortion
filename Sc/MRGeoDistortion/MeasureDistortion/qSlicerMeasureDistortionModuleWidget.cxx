@@ -247,6 +247,7 @@ void qSlicerMeasureDistortionModuleWidget::CalculateReferenceClick()
 	vtkPolyData* CTpolydata;
 	ReferenceNode = DistortionLogic->CalculateReference(CTNode);
 
+
 	vtkSlicerApplicationLogic *appLogic = this->module()->appLogic();
 	vtkMRMLSelectionNode *selectionNode = appLogic->GetSelectionNode();
 	//CTNode = d->CTVolumeNodeSelector->currentNode();
@@ -266,8 +267,8 @@ void qSlicerMeasureDistortionModuleWidget::CalculateDistortionClick()
 		return;
 	}
 	
-	GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node,MR2Node);
-	//GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node, MR2Node);
+	//vtkSmartPointer<vtkMRMLNode> GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node, MR2Node);
+	GNLDistortionNode = DistortionLogic->CalculateDistortion(MR1Node, MR2Node);
 	//	qDebug() << ReferenceNode;
 	//qDebug() << "test";
 	//Display Distortion Map

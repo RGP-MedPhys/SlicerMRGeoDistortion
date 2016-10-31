@@ -63,10 +63,10 @@ public:
   vtkMRMLNode* CalculateReference(vtkMRMLNode*);
  // vtkPolyData* CalculateReference(vtkMRMLNode*);
   vtkMRMLNode* CalculateDistortion(vtkMRMLNode*, vtkMRMLNode*);
-  void CalculateStats(vtkMRMLNode* MRNode, int dim);
-  vtkSmartPointer<vtkImageData> Distortion_polyfitSVD(vtkPolyData*, vtkDoubleArray*, int*, int);
-  vnl_vector<double> Fit3DPolySVD(vtkPolyData*, vtkDoubleArray*, int);
-  vtkSmartPointer<vtkImageData> Eval3DPolySVD(int*, vtkPolyData*, vnl_vector<double>, int);
+  void CalculateStats(vtkMRMLNode*, vtkSmartPointer<vtkPolyData>, vtkSmartPointer<vtkDoubleArray>, double*, int dim);
+  vtkSmartPointer<vtkImageData> Distortion_polyfitSVD(vtkSmartPointer<vtkPolyData>, vtkSmartPointer<vtkDoubleArray>, int*, int);
+  vnl_vector<double> Fit3DPolySVD(vtkSmartPointer<vtkPolyData>, vtkSmartPointer<vtkDoubleArray>, int);
+  vtkSmartPointer<vtkImageData> Eval3DPolySVD(int*, vtkSmartPointer<vtkPolyData>, vnl_vector<double>, int);
   vnl_vector<double> vnl_vectorpow(vnl_vector<double>,int);
 
   /*struct stats{
